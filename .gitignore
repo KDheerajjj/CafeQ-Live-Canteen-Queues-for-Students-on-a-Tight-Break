@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+venv/
+.venv/
+
+# Secrets — never commit real keys or PINs
+.env
+
+# Local databases and generated artefacts
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+backend/ml/model.joblib
+backend/ml/model_meta.json
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
