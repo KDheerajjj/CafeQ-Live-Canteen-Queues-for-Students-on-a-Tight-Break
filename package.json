@@ -12,7 +12,10 @@
     "qr": "node --env-file-if-exists=.env scripts/make-qr.js",
     "icons": "node scripts/make-icons.js",
     "deploy:rules": "npx --yes firebase-tools deploy --only firestore",
-    "deploy:hosting": "npx --yes firebase-tools deploy --only hosting"
+    "deploy:hosting": "npx --yes firebase-tools deploy --only hosting",
+    "make-admin": "node --env-file-if-exists=.env scripts/make-admin.js",
+    "ml:sample": "py -3 scripts/ml/generate_sample_data.py",
+    "ml:train": "py -3 scripts/ml/train.py"
   },
   "engines": {
     "node": ">=22.9"

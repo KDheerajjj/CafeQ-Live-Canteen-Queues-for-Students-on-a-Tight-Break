@@ -1,0 +1,936 @@
+{
+  "_comment": "FILL-IN TEMPLATE for Mingos Canteen. Item names and categories were transcribed from photos of the menu board taken on 24 Nov 2026 (Cafe Menu Photos/Mingos, 2 photos; the photos are kept out of the repo). Spelling is as on the board. Prices are deliberately not copied. prep_min and source are EMPTY ON PURPOSE: prep_min = average minutes to MAKE one serving, entered only from the vendor (source \"vendor\") or by timing servings (source \"observed\"); \"estimate\" only for an honest rough guess. Items without a prep_min are NOT loaded by npm run seed. You can also enter everything on /admin.html instead.",
+  "cafe_id": "cafe-b",
+  "items": [
+    {
+      "name": "Idly 2pc",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Vada",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Rice Bath with Vada",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Pulav with Raitha",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Poori Sagu",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Aloo Bonda / Chilly Bajji / Banana Bajji / Masala Vada / Madhur Vada",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Akki Roti / Ragi Roti / Methi Roti",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Plain Dosa",
+      "category": "Dosa Variety",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Masala Dosa",
+      "category": "Dosa Variety",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Butter Masala Dosa",
+      "category": "Dosa Variety",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Dosa",
+      "category": "Dosa Variety",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Masala Dosa",
+      "category": "Dosa Variety",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Open Butter Masala Dosa",
+      "category": "Dosa Variety",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Podi Open Butter Masala Dosa",
+      "category": "Dosa Variety",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Onion Uttappa / Dosa",
+      "category": "Dosa Variety",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Khali Dosa",
+      "category": "Dosa Variety",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Set Dosa",
+      "category": "Dosa Variety",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Ghee Podi Dosa",
+      "category": "Dosa Variety",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Ghee Podi Masala Dosa",
+      "category": "Dosa Variety",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "French Fries Salted",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "French Fries Peri Peri",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Potato Pops",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Jungly Fungli",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Popcorn",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Nuggets",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Pocket Shwarma",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Cutlet (2pcs)",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Cutlet",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Bun Cutlet",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Boiled Egg (2pcs)",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Only Omelette / Bhurji",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Egg Omelette Bhurji 2 Slices of Bread",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Egg Omelette",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Mayo Sandwich",
+      "category": "Sandwiches",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Bombay Aloo Sandwich",
+      "category": "Sandwiches",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Corn Sandwich",
+      "category": "Sandwiches",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Sandwich",
+      "category": "Sandwiches",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Corn Sandwich",
+      "category": "Sandwiches",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Sandwich",
+      "category": "Sandwiches",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Peri Peri Chicken Sandwich",
+      "category": "Sandwiches",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "BBQ Chicken Sandwich",
+      "category": "Sandwiches",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Manchurian / Gobi Manchurian",
+      "category": "Chinese Starters",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Manchurian / Chilly / 65",
+      "category": "Chinese Starters",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Mushroom Manchurian / Chilly / 65 / Kabab",
+      "category": "Chinese Starters",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Babycorn Pepper Dry / 65 / Manchurian / Chilly",
+      "category": "Chinese Starters",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Honey Chilly Potato",
+      "category": "Chinese Starters",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Manchurian / Chilly / 65",
+      "category": "Chinese Starters",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Fried Rice / Noodles",
+      "category": "Chinese (Rice / Noodles)",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Schezwan Fried Rice / Noodles",
+      "category": "Chinese (Rice / Noodles)",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Butter Garlic Noodles",
+      "category": "Chinese (Rice / Noodles)",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chilly Garlic Fried Rice",
+      "category": "Chinese (Rice / Noodles)",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Gobi Fried Rice",
+      "category": "Chinese (Rice / Noodles)",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Fried Rice / Noodles",
+      "category": "Chinese (Rice / Noodles)",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Butter Garlic Noodles",
+      "category": "Chinese (Rice / Noodles)",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chilly Garlic Paneer Fried Rice",
+      "category": "Chinese (Rice / Noodles)",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Egg Fried Rice / Noodles",
+      "category": "Chinese (Rice / Noodles)",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Egg Schezwan Fried Rice / Noodles",
+      "category": "Chinese (Rice / Noodles)",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Egg Butter Garlic Noodles",
+      "category": "Chinese (Rice / Noodles)",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Fried Rice / Noodles",
+      "category": "Chinese (Rice / Noodles)",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Schezwan Fried Rice / Noodles",
+      "category": "Chinese (Rice / Noodles)",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Butter Garlic Noodles",
+      "category": "Chinese (Rice / Noodles)",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "North Mini Meals",
+      "category": "Meals",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "North Full Meals",
+      "category": "Meals",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "South Mini Meals",
+      "category": "Meals",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "South Full Meals",
+      "category": "Meals",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Jeera Rice With Dal Tadka",
+      "category": "Combos",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Rajma / Chole Rice",
+      "category": "Combos",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Aloo Paratha With Chole",
+      "category": "Combos",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Curry Combo",
+      "category": "Combos",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chinese Combo (Veg Fried Rice or Veg Noodles served with Manchurian)",
+      "category": "Combos",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Non Veg Chinese Combo",
+      "category": "Combos",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Curry Combo",
+      "category": "Combos",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Egg Curry Combo",
+      "category": "Combos",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Hyderabadi Biryani",
+      "category": "Biryanis",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Mushroom Donne Biryani",
+      "category": "Biryanis",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Egg Hyderabadi Biryani",
+      "category": "Biryanis",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Hyderabadi Biryani",
+      "category": "Biryanis",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Donne Biryani",
+      "category": "Biryanis",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Kabab Biryani",
+      "category": "Biryanis",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Burger",
+      "category": "Burgers",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Burger",
+      "category": "Burgers",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Peri Peri Chicken Burger",
+      "category": "Burgers",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "BBQ Chicken Burger",
+      "category": "Burgers",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Vada Pav",
+      "category": "Burgers",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Bun Samosa",
+      "category": "Burgers",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Filter Coffee / Tea / Black Coffee / Fresh Lime Tea",
+      "category": "Hot Beverages, Juice & Milkshakes",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Ginger Coffee / Tea",
+      "category": "Hot Beverages, Juice & Milkshakes",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Badam Milk",
+      "category": "Hot Beverages, Juice & Milkshakes",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cafe Mocha",
+      "category": "Hot Beverages, Juice & Milkshakes",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Hot Chocolate",
+      "category": "Hot Beverages, Juice & Milkshakes",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Horlicks",
+      "category": "Hot Beverages, Juice & Milkshakes",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Boost",
+      "category": "Hot Beverages, Juice & Milkshakes",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Buttermilk",
+      "category": "Hot Beverages, Juice & Milkshakes",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Lemon Juice",
+      "category": "Hot Beverages, Juice & Milkshakes",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Fresh Juice",
+      "category": "Hot Beverages, Juice & Milkshakes",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Milkshakes",
+      "category": "Hot Beverages, Juice & Milkshakes",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Special Milkshake",
+      "category": "Hot Beverages, Juice & Milkshakes",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Lassi",
+      "category": "Hot Beverages, Juice & Milkshakes",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Fruit Bowl",
+      "category": "Hot Beverages, Juice & Milkshakes",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Lemon Ice Tea",
+      "category": "Cold Beverages & MRP",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cold Coffee",
+      "category": "Cold Beverages & MRP",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chia Juice",
+      "category": "Cold Beverages & MRP",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cold Drinks",
+      "category": "Cold Beverages & MRP",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Ice Creams",
+      "category": "Cold Beverages & MRP",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Poori Chole",
+      "category": "North Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chole Batura",
+      "category": "North Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Dal Khichadi",
+      "category": "North Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Aloo Paratha with Curd",
+      "category": "Parathas",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Aloo Cheese Paratha with Curd",
+      "category": "Parathas",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Aloo Paneer Mix Paratha",
+      "category": "Parathas",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Paratha with Curd",
+      "category": "Parathas",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Cheese Paratha with Curd",
+      "category": "Parathas",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Pasta Creamy Alfredo (white sauce)",
+      "category": "Pasta",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Pasta Creamy Alfredo (white sauce) with cheese",
+      "category": "Pasta",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Peri Peri Mac n Cheese",
+      "category": "Pasta",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Egg Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Peri Peri Chicken Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "BBQ Chicken Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Maggi Masala",
+      "category": "Maggi",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Peri Peri / Extra Masala / Corn / Cheese Maggi",
+      "category": "Maggi",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Maggi with Extra Masala or Peri Peri and Cheese",
+      "category": "Maggi",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Gulab Jamoon",
+      "category": "Desserts",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Gulab Jamoon with Icecream",
+      "category": "Desserts",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Fruit Custard",
+      "category": "Desserts",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Fruit Custard with Ice Cream",
+      "category": "Desserts",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Carrot Halwa",
+      "category": "Desserts",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Carrot Halwa with Ice Cream",
+      "category": "Desserts",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Brownie Sunday",
+      "category": "Desserts",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Pani Puri",
+      "category": "Chats",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Masala Puri",
+      "category": "Chats",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Bhelpuri",
+      "category": "Chats",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Bombay Dabeli",
+      "category": "Chats",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Bombay Cheese Dabeli",
+      "category": "Chats",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Sev Puri",
+      "category": "Chats",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Samosa Chat",
+      "category": "Chats",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Papdi Chat",
+      "category": "Chats",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Dahi Puri",
+      "category": "Chats",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Dahi Papdi",
+      "category": "Chats",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Dahi Samosa Chat",
+      "category": "Chats",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Raj Kachori",
+      "category": "Chats",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Pav Bhaji",
+      "category": "Chats",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Pav Bhaji",
+      "category": "Chats",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Margerita Pizza",
+      "category": "Pizza & Bakery",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Tandoori Paneer",
+      "category": "Pizza & Bakery",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Tandoori Mushroom",
+      "category": "Pizza & Bakery",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Bread Mushroom Pizza",
+      "category": "Pizza & Bakery",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Bread Paneer Pizza",
+      "category": "Pizza & Bakery",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Garlic Bread",
+      "category": "Pizza & Bakery",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Puff",
+      "category": "Pizza & Bakery",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Egg Puff",
+      "category": "Pizza & Bakery",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Puff",
+      "category": "Pizza & Bakery",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Puff",
+      "category": "Pizza & Bakery",
+      "prep_min": null,
+      "source": ""
+    }
+  ]
+}

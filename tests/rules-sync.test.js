@@ -1,22 +1,29 @@
-// The count -> colour thresholds live in two places that can't share code:
-// public/js/config.js (browser) and firestore.rules (server). This test fails
-// if someone tunes one and forgets the other.
+// Values that live in two places that can't share code: public/js/config.js
+// (browser) and firestore.rules (server). These tests fail if someone tunes one
+// and forgets the other.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { LEVEL_THRESHOLDS, QUEUE_COUNT_MAX } from "../public/js/config.js";
+import { DEFAULT_SETTINGS, SETTINGS_LIMITS, QUEUE_COUNT_MAX } from "../public/js/config.js";
 
 const rules = readFileSync(new URL("../firestore.rules", import.meta.url), "utf8");
 
-test("firestore.rules levelFor() uses the same thresholds as config.js", () => {
-  const m = rules.match(/count <= (\d+) \? 'green' : \(count <= (\d+) \? 'yellow' : 'red'\)/);
-  assert.ok(m, "levelFor() not found in firestore.rules");
-  assert.equal(Number(m[1]), LEVEL_THRESHOLDS.greenMax);
-  assert.equal(Number(m[2]), LEVEL_THRESHOLDS.yellowMax);
+test("rules fall back to the same default thresholds as config.js", () => {
+  assert.ok(rules.includes(`data.green_max : ${DEFAULT_SETTINGS.green_max};`));
+  assert.ok(rules.includes(`data.yellow_max : ${DEFAULT_SETTINGS.yellow_max};`));
 });
 
-test("firestore.rules caps queue_count at the same maximum as config.js", () => {
-  const m = rules.match(/queue_count <= (\d+)/);
-  assert.ok(m);
-  assert.equal(Number(m[1]), QUEUE_COUNT_MAX);
+test("rules levelFor() uses the live thresholds (<= green -> green, <= yellow -> yellow, else red)", () => {
+  assert.ok(rules.includes("count <= greenMax() ? 'green' : (count <= yellowMax() ? 'yellow' : 'red')"));
+});
+
+test("rules cap queue_count at the same maximum as config.js", () => {
+  assert.ok(rules.includes(`isInt(request.resource.data.queue_count, 0, ${QUEUE_COUNT_MAX})`));
+});
+
+test("rules enforce the same range for every admin setting as SETTINGS_LIMITS", () => {
+  for (const [key, [lo, hi, intOnly]] of Object.entries(SETTINGS_LIMITS)) {
+    const expected = `${intOnly ? "isInt" : "isNum"}(d.${key}, ${lo}, ${hi})`;
+    assert.ok(rules.includes(expected), `${key}: expected "${expected}" in firestore.rules`);
+  }
 });

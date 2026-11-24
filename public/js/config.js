@@ -107,10 +107,65 @@ export const WALK_DETOUR_FACTOR = 1.3;
 export const MAX_LOCATION_ACCURACY_M = 150;
 export const LOCATION_REFRESH_MIN = 3;
 
-// Human labels for each level. Keep in sync with firestore.rules.
+// Human labels for each level. Every status is shown as icon + text, never
+// colour alone: the icons differ in SHAPE so they work for colour-blind users.
 export const LEVELS = {
-  green: { label: "No wait", emoji: "🟢" },
-  yellow: { label: "Short line", emoji: "🟡" },
-  red: { label: "Packed", emoji: "🔴" },
-  unknown: { label: "Unknown", emoji: "⚪" },
+  green: { label: "No wait", icon: "✓" },
+  yellow: { label: "Short line", icon: "⏳" },
+  red: { label: "Packed", icon: "⛔" },
+  unknown: { label: "Unknown", icon: "?" },
 };
+
+// When a cafe is RED (packed), counters slow down (crowding at the counter,
+// orders backing up), so the queue wait is multiplied by this. ASSUMPTION.
+export const CONGESTION_FACTOR = 1.2;
+
+// ---------------------------------------------------------------------------
+// 3. Live settings (v3)
+// ---------------------------------------------------------------------------
+// The admin dashboard edits these in Firestore (`settings/global`) and every
+// open app picks them up live, with no redeploy. The values here are only the
+// safe DEFAULTS used when the document (or a field in it) is missing or invalid.
+// Field names match the Firestore document.
+export const DEFAULT_SETTINGS = Object.freeze({
+  green_max: LEVEL_THRESHOLDS.greenMax,   // queue <= this -> green
+  yellow_max: LEVEL_THRESHOLDS.yellowMax, // queue <= this -> yellow, above -> red
+  prep_buffer_min: PREP_BUFFER_MIN,       // generic "make the order" time when no item is picked
+  cooldown_min: COOLDOWN_MIN,             // one report per device per N minutes
+  stale_min: STATUS_WINDOW_MIN,           // reports older than this are ignored
+  outlier_cap: OUTLIER_COUNT_CAP,         // single counts above this are ignored
+  eating_buffer_min: EATING_BUFFER_MIN,   // "Will I make it?" eating time
+  congestion_factor: CONGESTION_FACTOR,   // queue-wait multiplier when red
+});
+
+// Allowed range for each setting: [min, max, integerOnly].
+// firestore.rules enforces the same ranges on admin writes (a test checks the
+// threshold defaults stay in sync).
+export const SETTINGS_LIMITS = Object.freeze({
+  green_max: [0, 20, true],
+  yellow_max: [1, 50, true],
+  prep_buffer_min: [0, 15, false],
+  cooldown_min: [0, 30, false],
+  stale_min: [5, 60, true],
+  outlier_cap: [10, 100, true],
+  eating_buffer_min: [0, 30, false],
+  congestion_factor: [1, 3, false],
+});
+
+// Menu item provenance, kept visible so nobody mistakes a guess for a measurement.
+export const MENU_SOURCES = {
+  vendor: "Told by the vendor",
+  observed: "Timed by us",
+  estimate: "Rough estimate",
+};
+
+// "How long did it actually take?" quick answers (minutes, from joining the
+// line to food in hand). The ONLY source of ML training labels.
+export const FEEDBACK_CHOICES = [2, 5, 8, 10, 15, 20, 30, 45];
+// Ask for feedback this long after "I'm going", and forget the visit after this.
+export const FEEDBACK_ASK_AFTER_MIN = 3;
+export const FEEDBACK_FORGET_AFTER_MIN = 240;
+
+// ML policy (see scripts/ml/README.md): the browser only uses public/model.json
+// if the offline trainer wrote it AND marked it as beating the formula baseline.
+export const MODEL_URL = "./model.json";

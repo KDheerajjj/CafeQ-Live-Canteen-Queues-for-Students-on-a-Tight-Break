@@ -1,0 +1,270 @@
+{
+  "_comment": "FILL-IN TEMPLATE for M M Foods. Item names and categories were transcribed from photos of the menu board taken on 24 Nov 2026 (Cafe Menu Photos/M M Foods, 1 photo; the photos are kept out of the repo). Spelling is as on the board. Prices are deliberately not copied. prep_min and source are EMPTY ON PURPOSE: prep_min = average minutes to MAKE one serving, entered only from the vendor (source \"vendor\") or by timing servings (source \"observed\"); \"estimate\" only for an honest rough guess. Items without a prep_min are NOT loaded by npm run seed. You can also enter everything on /admin.html instead.",
+  "cafe_id": "cafe-a",
+  "items": [
+    {
+      "name": "Paneer Fried Rice",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Baby Corn Fried Rice",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Gobi Fried Rice",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Schezwan Fried Rice",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Egg Fried Rice",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Fried Rice",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Noodles",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Noodles",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Baby Corn Noodles",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Egg Noodles",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Gobi Manchurian",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Baby Corn Manchurian",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Manchurian",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Mushroom Manchurian",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Gobi Chilli",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Baby Corn Chilli",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Chilli",
+      "category": "Chinese Specials",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Ghee Plain Dosa",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Ghee Masala Dosa",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Ghee Mysore Masala Dosa",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Ghee Set Dosa",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Ghee Paneer Dosa",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Ghee Onion Dosa",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Open Butter Dosa",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Vada",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Idli (2 Pieces)",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Idli (3 Pieces)",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Idli Vada",
+      "category": "South Indian",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chocolate Pastry",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Black Forest Pastry",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Butterscotch Pastry",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Mocha Pastry",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chocolate Brownie",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chocolate Donut",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Stuffed Chocolate Donut",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Stuffed Blueberry Donut",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Donut",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Korean Bun",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Muffin",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chocolate Mousse",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Oreo Pastry",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Cake",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Biriyani",
+      "category": "Lunch Items",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Biriyani",
+      "category": "Lunch Items",
+      "prep_min": null,
+      "source": ""
+    }
+  ]
+}

@@ -22,12 +22,18 @@ import { ensureAnonUser, getFirebase, registerServiceWorker } from "./firebase-i
 import { haversineMeters, isWithinGeofence } from "./geo.js";
 import { computeStatus, levelForCount, isValidCount } from "./status-engine.js";
 import { reportFromDoc } from "./data.js";
-import { COOLDOWN_MIN, STATUS_WINDOW_MIN, QUEUE_BUCKETS, QUEUE_COUNT_MAX, LEVELS } from "./config.js";
+import { QUEUE_BUCKETS, QUEUE_COUNT_MAX, LEVELS } from "./config.js";
+import { normaliseSettings, engineOpts } from "./settings.js";
 import { esc, levelLabel, minutesAgo, waitText, queueText, describeError } from "./ui.js";
 
 registerServiceWorker();
 
 const MIN_MS = 60 * 1000;
+// Live admin settings (thresholds, cooldown, stale window). Read once per page
+// load; the colour of a report MUST use the same thresholds as firestore.rules,
+// which read the same settings/global document.
+let settings = normaliseSettings(null);
+const thresholds = () => ({ greenMax: settings.green_max, yellowMax: settings.yellow_max });
 const LAST_REPORT_KEY = "cafeq.lastReportAt";
 const $ = (id) => document.getElementById(id);
 
@@ -64,11 +70,11 @@ function rememberReport() {
   }
 }
 
-/** True if this device reported in the last COOLDOWN_MIN minutes. Checks
+/** True if this device reported in the last cooldown_min minutes. Checks
  * localStorage first (instant), then Firestore by uid (survives cleared storage
  * as long as the anonymous session survives). */
 async function inCooldown(db, fs, uid) {
-  const since = Date.now() - COOLDOWN_MIN * MIN_MS;
+  const since = Date.now() - settings.cooldown_min * MIN_MS;
   if (localLastReport() >= since) return true;
   try {
     const q = fs.query(
@@ -103,7 +109,7 @@ function getPosition() {
 
 // ---------- after submit: live status of this cafe ----------
 function watchCafeStatus(db, fs, cafe) {
-  const since = fs.Timestamp.fromMillis(Date.now() - STATUS_WINDOW_MIN * MIN_MS);
+  const since = fs.Timestamp.fromMillis(Date.now() - settings.stale_min * MIN_MS);
   const q = fs.query(
     fs.collection(db, "reports"),
     fs.where("cafe_id", "==", cafe.id),
@@ -113,16 +119,14 @@ function watchCafeStatus(db, fs, cafe) {
   fs.onSnapshot(
     q,
     (snap) => {
-      const s = computeStatus(snap.docs.map(reportFromDoc), Date.now(), {
-        serviceSecPerPerson: cafe.service_sec_per_person,
-      });
+      const s = computeStatus(snap.docs.map(reportFromDoc), Date.now(), engineOpts(settings, cafe));
       $("now-dot").className = `dot ${s.status}`;
       $("now-label").textContent =
         levelLabel(s.status) + (s.queueCount != null ? ` · ${queueText(s.queueCount)}` : "");
       $("now-meta").textContent =
         s.status === "unknown"
           ? "No recent reports."
-          : `${waitText(s.waitMin)} · ${s.reportCount} report${s.reportCount === 1 ? "" : "s"} in 15 min · ` +
+          : `${waitText(s.waitMin)} · ${s.reportCount} report${s.reportCount === 1 ? "" : "s"} in ${settings.stale_min} min · ` +
             `${s.confidence} confidence · updated ${minutesAgo(s.updatedMinAgo)}`;
     },
     (err) => {
@@ -153,7 +157,11 @@ async function run() {
 
   let cafe;
   try {
-    const snap = await fs.getDoc(fs.doc(db, "cafes", cafeId));
+    const [snap, settingsSnap] = await Promise.all([
+      fs.getDoc(fs.doc(db, "cafes", cafeId)),
+      fs.getDoc(fs.doc(db, "settings", "global")).catch(() => null), // defaults if unreadable
+    ]);
+    settings = normaliseSettings(settingsSnap && settingsSnap.exists() ? settingsSnap.data() : null);
     if (!snap.exists()) {
       message("Unknown cafe", `There's no cafe with id "${cafeId}". The QR code may be out of date.`);
       return;
@@ -180,7 +188,7 @@ async function run() {
   // 3. Cooldown.
   loading("Checking…");
   if (await inCooldown(db, fs, uid)) {
-    message("Thanks — you just reported.", `You can report again ${COOLDOWN_MIN} minutes after your last report.`);
+    message("Thanks — you just reported.", `You can report again ${settings.cooldown_min} minutes after your last report.`);
     return;
   }
 
@@ -228,10 +236,10 @@ async function run() {
 
   // Bucket buttons, coloured by the level their midpoint maps to.
   $("buckets").innerHTML = QUEUE_BUCKETS.map((b) => {
-    const level = levelForCount(b.count);
+    const level = levelForCount(b.count, thresholds());
     return `<button class="level-btn ${level}" type="button" data-count="${b.count}" data-label="${esc(b.label)}"
         aria-label="${esc(b.label)} people in line">
-        <span class="emoji" aria-hidden="true">${LEVELS[level].emoji}</span>
+        <span class="emoji" aria-hidden="true">${LEVELS[level].icon}</span>
         <span>${esc(b.label)}<small>people · ${esc(LEVELS[level].label)}</small></span>
       </button>`;
   }).join("");
@@ -256,7 +264,7 @@ async function run() {
         ? ""
         : n === null
           ? `Enter a whole number from 0 to ${QUEUE_COUNT_MAX}.`
-          : `${n} in line → ${LEVELS[levelForCount(n)].emoji} ${levelLabel(levelForCount(n))}`;
+          : `${n} in line → ${LEVELS[levelForCount(n, thresholds())].icon} ${levelLabel(levelForCount(n, thresholds()))}`;
   };
   $("exact-form").onsubmit = (e) => {
     e.preventDefault();
@@ -267,7 +275,7 @@ async function run() {
 
 async function submit({ db, fs, cafe, uid, queueCount, how, accuracy }) {
   loading("Sending…");
-  const level = levelForCount(queueCount); // derived, never chosen separately
+  const level = levelForCount(queueCount, thresholds()); // derived (live thresholds), never chosen separately
   const write = fs.addDoc(fs.collection(db, "reports"), {
     cafe_id: cafe.id,
     queue_count: queueCount,          // integer 0..100 (bucket midpoint or exact)

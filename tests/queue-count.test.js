@@ -31,12 +31,12 @@ test("wait = round(count × sec/person ÷ 60) + 1 min prep", () => {
   assert.equal(waitFromCount(0, 45), 1);  // empty counter still takes a minute
 });
 
-test("same queue -> the cafe shows a shorter wait than the canteen", () => {
+test("same queue -> the cafe shows a shorter wait than the canteen (8 = red, x1.2 congestion)", () => {
   const reports = [q(8, 1), q(8, 3)];
   const canteen = computeStatus(reports, NOW, { serviceSecPerPerson: 60 });
   const cafe = computeStatus(reports, NOW, { serviceSecPerPerson: 45 });
-  assert.equal(canteen.waitMin, 9);
-  assert.equal(cafe.waitMin, 7);
+  assert.equal(canteen.waitMin, 11); // 8x60/60 = 8, x1.2 = 9.6, +1 = 10.6 -> 11
+  assert.equal(cafe.waitMin, 8);     // 8x45/60 = 6, x1.2 = 7.2, +1 = 8.2 -> 8
   assert.ok(cafe.waitMin < canteen.waitMin);
 });
 
@@ -59,7 +59,7 @@ test("one troll typing 99 is ignored (cap 50), and doesn't move the median", () 
 test("a large but plausible count (<= 50) still counts", () => {
   const s = computeStatus([q(30, 1)], NOW, { serviceSecPerPerson: 60 });
   assert.equal(s.status, "red");
-  assert.equal(s.waitMin, 31);
+  assert.equal(s.waitMin, 37); // 30 x 1.2 congestion + 1
 });
 
 test("only outliers -> unknown", () => {

@@ -13,12 +13,15 @@
 // The activate handler deletes every cache whose name differs, so installed
 // apps drop the old icon/UI instead of serving stale copies.
 
-const CACHE_VERSION = "cafeq-cache-v6";
+const CACHE_VERSION = "cafeq-cache-v7";
+// model.json is NOT precached: it usually does not exist (the app then uses the
+// formula). When it does, the network-first handler below caches it on first use.
 const SHELL = [
   "./",
   "./index.html",
   "./report.html",
   "./worthit.html",
+  "./admin.html",
   "./css/styles.css",
   "./js/config.js",
   "./js/firebase-init.js",
@@ -27,6 +30,12 @@ const SHELL = [
   "./js/status-engine.js",
   "./js/geo.js",
   "./js/location.js",
+  "./js/settings.js",
+  "./js/theme.js",
+  "./js/model.js",
+  "./js/feedback.js",
+  "./js/admin.js",
+  "./js/admin-lib.js",
   "./js/dashboard.js",
   "./js/report.js",
   "./js/worthit.js",

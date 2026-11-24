@@ -1,0 +1,414 @@
+{
+  "_comment": "FILL-IN TEMPLATE for M M Foods (Library). Item names and categories were transcribed from photos of the menu board taken on 24 Nov 2026 (Cafe Menu Photos/M M Foods (Library), 3 photos; the photos are kept out of the repo). Spelling is as on the board. Prices are deliberately not copied. prep_min and source are EMPTY ON PURPOSE: prep_min = average minutes to MAKE one serving, entered only from the vendor (source \"vendor\") or by timing servings (source \"observed\"); \"estimate\" only for an honest rough guess. Items without a prep_min are NOT loaded by npm run seed. You can also enter everything on /admin.html instead.",
+  "cafe_id": "cafe-d",
+  "items": [
+    {
+      "name": "Chocolate Pastry",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Black Forest Pastry",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Butterscotch Pastry",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Mocha Pastry",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chocolate Brownie",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chocolate Donut",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Stuffed Chocolate Donut",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Stuffed Blueberry Donut",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Donut",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Korean Bun",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Muffin",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chocolate Mousse",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Oreo Pastry",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Cake",
+      "category": "Bakery Products",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Plain Maggi",
+      "category": "Maggi",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Mixed Veg Maggi",
+      "category": "Maggi",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Maggi",
+      "category": "Maggi",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Veg Maggi",
+      "category": "Maggi",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Tea",
+      "category": "Hot Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Coffee",
+      "category": "Hot Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Badam Milk",
+      "category": "Hot Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Lemon Tea",
+      "category": "Hot Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Hyderabadi Biriyani",
+      "category": "Lunch Items",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Rajma Rice",
+      "category": "Lunch Items",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Dal Rice",
+      "category": "Lunch Items",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Curd Rice",
+      "category": "Lunch Items",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chole Bhature",
+      "category": "Lunch Items",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Tandoori Roti with Curry",
+      "category": "Tandoori",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Butter Naan with Curry",
+      "category": "Tandoori",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Butter Kulcha with Curry",
+      "category": "Tandoori",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Garlic Naan with Curry",
+      "category": "Tandoori",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Special Paneer Tikka",
+      "category": "Tandoori",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Veg Seekh",
+      "category": "Tandoori",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Stuffed Kulcha",
+      "category": "Tandoori",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Tandoori Aloo Paratha",
+      "category": "Tandoori",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Tandoori Paneer Paratha",
+      "category": "Tandoori",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Spring Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Puff",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Puff",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Mushroom Puff",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Burger",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Tikka Burger",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Garlic Bread",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Salsa Bruschetta",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Pizza Bread",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Platter",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Platter",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Samosa",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Vada Pav",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Bread Pakoda",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Loaded Nachos",
+      "category": "Snacks",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Mixed Veg Sandwich",
+      "category": "Sandwiches",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Veg Sandwich",
+      "category": "Sandwiches",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Sandwich",
+      "category": "Sandwiches",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Corn Sandwich",
+      "category": "Sandwiches",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Cheese Sandwich",
+      "category": "Sandwiches",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Gotala Sandwich",
+      "category": "Sandwiches",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Hot Triple Chocolate Sandwich",
+      "category": "Sandwiches",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Fresh Lime Soda",
+      "category": "Cold Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Green Apple Lemonade",
+      "category": "Cold Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Blue Lagoon",
+      "category": "Cold Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Strawberry Mojito",
+      "category": "Cold Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Virgin Mojito",
+      "category": "Cold Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cold Coffee",
+      "category": "Cold Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Oreo Milkshake",
+      "category": "Cold Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Kitkat Milkshake",
+      "category": "Cold Beverages",
+      "prep_min": null,
+      "source": ""
+    }
+  ]
+}

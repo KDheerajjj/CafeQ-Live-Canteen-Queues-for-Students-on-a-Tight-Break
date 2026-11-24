@@ -28,3 +28,12 @@ Thumbs.db
 .vscode/
 .idea/
 .vercel
+
+# Menu photos show students' and staff faces: keep them out of the public repo
+Cafe Menu Photos/
+
+# ML outputs (regenerate with npm run ml:sample / ml:train). public/model.json
+# is only written by train.py when a model beats the baseline on REAL data.
+scripts/ml/out/
+scripts/ml/data/*.csv
+__pycache__/

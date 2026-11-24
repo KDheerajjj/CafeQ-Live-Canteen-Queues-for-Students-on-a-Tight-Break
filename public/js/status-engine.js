@@ -18,6 +18,7 @@ import {
   PREP_BUFFER_MIN,
   DEFAULT_SERVICE_SEC_PER_PERSON,
   QUEUE_COUNT_MAX,
+  CONGESTION_FACTOR,
 } from "./config.js";
 
 const MIN_MS = 60 * 1000;
@@ -60,11 +61,22 @@ export function median(nums) {
 }
 
 /**
- * Count-based wait estimate (an ESTIMATE built on a per-cafe service-rate ASSUMPTION):
- *   round(queueCount × secondsPerPerson / 60) + prep buffer
+ * Minutes spent IN THE LINE (before your order is made). ESTIMATE built on a
+ * per-cafe service-rate ASSUMPTION:
+ *   queue_wait = queueCount × secondsPerPerson / 60,  × congestion factor when red
+ * Left unrounded so it can be combined with an item's prep time first.
  */
-export function waitFromCount(queueCount, secPerPerson, prepBufferMin = PREP_BUFFER_MIN) {
-  return Math.round((queueCount * secPerPerson) / 60) + prepBufferMin;
+export function queueWaitMinutes(queueCount, secPerPerson, { congested = false, congestionFactor = CONGESTION_FACTOR } = {}) {
+  const base = (queueCount * secPerPerson) / 60;
+  return congested ? base * congestionFactor : base;
+}
+
+/**
+ * Generic wait (no item picked) = round(queue wait + prep buffer).
+ * Pass congestionFactor > 1 together with congested=true for a red cafe.
+ */
+export function waitFromCount(queueCount, secPerPerson, prepBufferMin = PREP_BUFFER_MIN, congestion = {}) {
+  return Math.round(queueWaitMinutes(queueCount, secPerPerson, congestion) + prepBufferMin);
 }
 
 // ---------------------------------------------------------------------------
@@ -74,14 +86,19 @@ export function waitFromCount(queueCount, secPerPerson, prepBufferMin = PREP_BUF
 /**
  * Compute one cafe's status from its reports.
  *
- *  1. Keep reports from the last STATUS_WINDOW_MIN (15) minutes, newest first.
- *     Drop outliers: any single queue_count > OUTLIER_COUNT_CAP (50) is ignored here.
+ *  All the numbers below (15 min, 50, thresholds, buffers, congestion factor)
+ *  are LIVE admin settings (settings/global); config.js only holds the defaults.
+ *
+ *  1. Keep reports from the last stale_min (15) minutes, newest first.
+ *     Drop outliers: any single queue_count > outlier_cap (50) is ignored here.
  *  2. Nothing left -> "unknown", no confidence. (Covers "newest report older
  *     than 15 min -> force unknown".)
  *  3. If any report carries a queue_count (v2):
  *       queueCount = MEDIAN of the counts  (robust: one silly entry can't move it)
  *       status     = levelForCount(median)
- *       waitMin    = round(median × cafe's service_sec_per_person / 60) + prep buffer
+ *       queueWaitMin = median × cafe's service_sec_per_person / 60
+ *                      × congestion_factor (1.2) if the status is red
+ *       waitMin    = round(queueWaitMin + prep buffer)   (no item picked)
  *     Otherwise (only old colour-only reports):
  *       status     = MODE of the colours (tie -> most recently reported colour)
  *       waitMin    = STATUS_WAIT_MIN fallback map
@@ -92,7 +109,8 @@ export function waitFromCount(queueCount, secPerPerson, prepBufferMin = PREP_BUF
  *
  * @param {Array<{level?: string, queue_count?: number, created_at: any}>} reports  any order
  * @param {number} nowMs  current time (injected so tests are deterministic)
- * @param {object} [opts] { serviceSecPerPerson, windowMin, ... } — mainly for tests
+ * @param {object} [opts] built by settings.engineOpts(settings, cafe):
+ *        { windowMin, thresholds, outlierCap, prepBufferMin, congestionFactor, serviceSecPerPerson }
  */
 export function computeStatus(reports, nowMs, opts = {}) {
   const windowMin = opts.windowMin ?? STATUS_WINDOW_MIN;
@@ -101,6 +119,9 @@ export function computeStatus(reports, nowMs, opts = {}) {
   const waitMap = opts.waitMap ?? STATUS_WAIT_MIN;
   const secPerPerson = opts.serviceSecPerPerson ?? DEFAULT_SERVICE_SEC_PER_PERSON;
   const outlierCap = opts.outlierCap ?? OUTLIER_COUNT_CAP;
+  const thresholds = opts.thresholds ?? LEVEL_THRESHOLDS;
+  const prepBufferMin = opts.prepBufferMin ?? PREP_BUFFER_MIN;
+  const congestionFactor = opts.congestionFactor ?? CONGESTION_FACTOR;
 
   const windowStart = nowMs - windowMin * MIN_MS;
   let ignored = 0;
@@ -114,7 +135,7 @@ export function computeStatus(reports, nowMs, opts = {}) {
       continue;
     }
     // A count report's colour is re-derived from its count; old reports keep their colour.
-    const level = count !== null ? levelForCount(count) : r.level;
+    const level = count !== null ? levelForCount(count, thresholds) : r.level;
     if (!VALID_LEVELS.includes(level)) continue;
     recent.push({ t, level, count });
   }
@@ -123,7 +144,7 @@ export function computeStatus(reports, nowMs, opts = {}) {
   const counts = { green: 0, yellow: 0, red: 0 };
   if (recent.length === 0) {
     return {
-      status: "unknown", confidence: null, waitMin: waitMap.unknown ?? null, waitSource: null,
+      status: "unknown", confidence: null, waitMin: waitMap.unknown ?? null, queueWaitMin: null, waitSource: null,
       queueCount: null, updatedMinAgo: null, reportCount: 0, ignoredCount: ignored, counts,
     };
   }
@@ -135,13 +156,14 @@ export function computeStatus(reports, nowMs, opts = {}) {
   }
 
   const countValues = recent.filter((r) => r.count !== null).map((r) => r.count);
-  let status, waitMin, waitSource, queueCount;
+  let status, waitMin, waitSource, queueCount, queueWaitMin;
 
   if (countValues.length > 0) {
     // v2 path: median queue length drives everything.
     queueCount = median(countValues);
-    status = levelForCount(queueCount);
-    waitMin = waitFromCount(queueCount, secPerPerson, opts.prepBufferMin ?? PREP_BUFFER_MIN);
+    status = levelForCount(queueCount, thresholds);
+    queueWaitMin = queueWaitMinutes(queueCount, secPerPerson, { congested: status === "red", congestionFactor });
+    waitMin = Math.round(queueWaitMin + prepBufferMin);
     waitSource = "count";
   } else {
     // Backward-compatible path: colour-only reports. Mode with recency tie-break.
@@ -158,6 +180,7 @@ export function computeStatus(reports, nowMs, opts = {}) {
     }
     queueCount = null;
     waitMin = waitMap[status] ?? null;
+    queueWaitMin = waitMin; // the rough fallback is treated as time in the line
     waitSource = "colour";
   }
 
@@ -169,6 +192,7 @@ export function computeStatus(reports, nowMs, opts = {}) {
     status,
     confidence,
     waitMin,      // ESTIMATE (count × service-rate assumption, or the colour fallback map)
+    queueWaitMin, // unrounded minutes in the line, before any item prep
     waitSource,   // "count" | "colour"
     queueCount,   // median count, or null when only colour reports exist
     updatedMinAgo: Math.max(0, Math.floor((nowMs - recent[0].t) / MIN_MS)),
@@ -176,6 +200,43 @@ export function computeStatus(reports, nowMs, opts = {}) {
     ignoredCount: ignored,
     counts,
   };
+}
+
+/**
+ * Time-at-the-cafe estimate for one student: queue + making THEIR order.
+ *
+ *   Baseline FORMULA (what ships):  est_total = queueWaitMin + item.prep_min
+ *     (no item picked -> + prep_buffer_min instead; queueWaitMin already
+ *      includes the congestion factor when the cafe is red)
+ *   Optional MODEL: if `model` is given (public/model.json, trained offline and
+ *     only published when it beat this formula), its prediction is used instead,
+ *     but only for count-based statuses (the model was trained on queue counts).
+ *
+ * Returns { min, method } where method is "formula" | "model" | "fallback"
+ * (old colour-only reports) | null (unknown — no estimate).
+ *
+ * @param {{status, cafe, item?, settings, model?, now?: Date}} args
+ */
+export function estimateFor({ status, cafe, item = null, settings, model = null, now = new Date() }) {
+  if (!status || status.status === "unknown" || status.waitMin == null) return { min: null, method: null };
+  const prepMin = item ? item.prep_min : settings.prep_buffer_min;
+
+  if (model && status.waitSource === "count") {
+    const predicted = model.predict({
+      queue_count: status.queueCount,
+      hour: now.getHours(),
+      day_of_week: (now.getDay() + 6) % 7, // Monday = 0, like Python's weekday()
+      item_prep_min: prepMin,
+      cafe_type: cafe?.type,
+      service_sec_per_person: cafe?.service_sec_per_person,
+    });
+    if (Number.isFinite(predicted)) return { min: Math.max(1, Math.round(predicted)), method: "model" };
+  }
+  if (status.waitSource === "count") {
+    return { min: Math.round(status.queueWaitMin + prepMin), method: "formula" };
+  }
+  // Colour-only fallback: rough line wait (+ the item's prep if one is picked).
+  return { min: Math.round(status.waitMin + (item ? item.prep_min : 0)), method: "fallback" };
 }
 
 /** Group a flat list of report objects by cafe_id. */
@@ -189,9 +250,10 @@ export function groupByCafe(reports) {
  * Dashboard ordering: "soonest usable first".
  * Known, non-red cafes come first, ordered by walk + estimated wait (ascending);
  * then red (packed) cafes; unknown cafes last. Ties break by name.
- * Each row may carry `walkMin` (e.g. from the student's own location); if it
- * doesn't, the cafe's reference-point walk_min is used.
- * @param {Array<{cafe, status, walkMin?}>} rows
+ * Each row may carry `walkMin` (e.g. from the student's own location) and
+ * `est` (the item-aware estimate from estimateFor); otherwise the cafe's
+ * reference-point walk_min and the generic status wait are used.
+ * @param {Array<{cafe, status, walkMin?, est?}>} rows
  */
 export function sortForDashboard(rows) {
   const bucket = (s) => (s.status === "unknown" ? 2 : s.status === "red" ? 1 : 0);
@@ -199,8 +261,8 @@ export function sortForDashboard(rows) {
   return [...rows].sort((a, b) => {
     const d = bucket(a.status) - bucket(b.status);
     if (d !== 0) return d;
-    const ta = walk(a) + (a.status.waitMin ?? 0);
-    const tb = walk(b) + (b.status.waitMin ?? 0);
+    const ta = walk(a) + (a.est?.min ?? a.status.waitMin ?? 0);
+    const tb = walk(b) + (b.est?.min ?? b.status.waitMin ?? 0);
     if (ta !== tb) return ta - tb;
     return String(a.cafe.name).localeCompare(String(b.cafe.name));
   });

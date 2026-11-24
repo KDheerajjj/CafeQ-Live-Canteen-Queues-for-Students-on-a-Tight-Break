@@ -1,58 +1,156 @@
 rules_version = '2';
 
-// CafeQ Phase-1 security rules.
+// CafeQ security rules (v3).
 //
-// What these rules DO guarantee (server-side):
-//   - nobody can edit/delete cafes from the client (they are seeded by script);
-//   - a report must come from a signed-in (anonymous) device, name that device's
-//     own uid, use a valid level, point at a cafe that exists, and carry the
-//     server's own timestamp (so clients can't back-date or future-date reports);
-//   - reports are append-only: no client updates or deletes.
+// Guaranteed server-side:
+//   - cafes, settings, menu_items: anyone can READ; only admins (a document in
+//     `admins/{uid}`) can write, and every write is shape- and range-checked.
+//   - admins: you can only read your own admin document; no client writes
+//     (admins are added by the project owner: `npm run make-admin` or the console).
+//   - reports: signed-in device, its own uid, server timestamp, an existing cafe,
+//     an integer queue_count 0..100 and a level that matches that count under the
+//     LIVE thresholds in settings/global. Append-only.
+//   - feedback: signed-in device, its own uid, server timestamp, an existing cafe
+//     and validated ranges. Append-only. Only admins can read it (CSV export).
 //
-// What they do NOT guarantee (enforced only in the browser in Phase 1):
-//   - the geofence (reporter is physically near the cafe), and
-//   - the 3-minute cooldown.
-// A determined user could bypass those. Phase-2 hardening = a Cloud Function,
-// which needs the Blaze (billing) plan. See README "Trust model".
+// NOT guaranteed (client-side only, Spark plan): the report geofence, the report
+// cooldown and one-feedback-per-visit. A determined user could bypass them;
+// Phase-2 hardening = a Cloud Function (Blaze plan). See README "Trust model".
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // queue_count -> colour. Same mapping as levelForCount() in status-engine.js.
-    function levelFor(count) {
-      return count <= 2 ? 'green' : (count <= 6 ? 'yellow' : 'red');
+    // ---------- helpers ----------
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    function cafeExists(id) {
+      return id is string && exists(/databases/$(database)/documents/cafes/$(id));
+    }
+    function isNum(v, lo, hi) { return v is number && v >= lo && v <= hi; }
+    function isInt(v, lo, hi) { return v is int && v >= lo && v <= hi; }
+    function optional(d, key) { return !(key in d); }
+    function stampedByAdmin(d) {
+      return d.updated_at == request.time && d.updated_by == request.auth.uid;
     }
 
-    match /cafes/{cafeId} {
-      allow read: if true;
+    // Live count -> colour thresholds. Defaults (2, 6) MUST match DEFAULT_SETTINGS
+    // in public/js/config.js; tests/rules-sync.test.js checks this.
+    function settingsDoc() { return /databases/$(database)/documents/settings/global; }
+    function greenMax() { return exists(settingsDoc()) ? get(settingsDoc()).data.green_max : 2; }
+    function yellowMax() { return exists(settingsDoc()) ? get(settingsDoc()).data.yellow_max : 6; }
+    function levelFor(count) {
+      return count <= greenMax() ? 'green' : (count <= yellowMax() ? 'yellow' : 'red');
+    }
+
+    // ---------- admins ----------
+    match /admins/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
       allow write: if false;
     }
 
+    // ---------- settings ----------
+    // Ranges MUST match SETTINGS_LIMITS in public/js/config.js.
+    function validSettings(d) {
+      return d.keys().hasAll(['green_max', 'yellow_max', 'prep_buffer_min', 'cooldown_min', 'stale_min',
+                              'outlier_cap', 'eating_buffer_min', 'congestion_factor', 'updated_at', 'updated_by'])
+        && d.keys().hasOnly(['green_max', 'yellow_max', 'prep_buffer_min', 'cooldown_min', 'stale_min',
+                             'outlier_cap', 'eating_buffer_min', 'congestion_factor', 'updated_at', 'updated_by'])
+        && isInt(d.green_max, 0, 20)
+        && isInt(d.yellow_max, 1, 50) && d.yellow_max > d.green_max
+        && isNum(d.prep_buffer_min, 0, 15)
+        && isNum(d.cooldown_min, 0, 30)
+        && isInt(d.stale_min, 5, 60)
+        && isInt(d.outlier_cap, 10, 100)
+        && isNum(d.eating_buffer_min, 0, 30)
+        && isNum(d.congestion_factor, 1, 3)
+        && stampedByAdmin(d);
+    }
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if isAdmin() && id == 'global' && validSettings(request.resource.data);
+    }
+
+    // ---------- cafes ----------
+    function validCafe(d) {
+      return d.keys().hasAll(['name', 'type', 'lat', 'lng', 'geofence_m', 'walk_min', 'service_sec_per_person'])
+        && d.keys().hasOnly(['name', 'type', 'location_desc', 'lat', 'lng', 'geofence_m', 'walk_min',
+                             'service_sec_per_person', 'active', 'placeholder', 'updated_at', 'updated_by'])
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 60
+        && d.type in ['canteen', 'cafe']
+        && isNum(d.lat, -90, 90) && isNum(d.lng, -180, 180)
+        && isNum(d.geofence_m, 10, 500)
+        && isNum(d.walk_min, 0, 60)
+        && isNum(d.service_sec_per_person, 5, 600)
+        && (optional(d, 'location_desc') || (d.location_desc is string && d.location_desc.size() <= 120))
+        && (optional(d, 'active') || d.active is bool)
+        && (optional(d, 'placeholder') || d.placeholder is bool)
+        && stampedByAdmin(d);
+    }
+    match /cafes/{cafeId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && cafeId.matches('^[a-z0-9-]{1,40}$') && validCafe(request.resource.data);
+      allow delete: if false; // deactivate instead, so old reports stay meaningful
+    }
+
+    // ---------- menu items ----------
+    function validItem(d) {
+      return d.keys().hasAll(['cafe_id', 'name', 'prep_min', 'available', 'source'])
+        && d.keys().hasOnly(['cafe_id', 'name', 'category', 'prep_min', 'available', 'source', 'updated_at', 'updated_by'])
+        && cafeExists(d.cafe_id)
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 80
+        && isNum(d.prep_min, 0, 60)
+        && d.available is bool
+        && d.source in ['vendor', 'observed', 'estimate']
+        && (optional(d, 'category') || (d.category is string && d.category.size() <= 40))
+        && stampedByAdmin(d);
+    }
+    match /menu_items/{itemId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && validItem(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // ---------- reports ----------
     match /reports/{reportId} {
-      // Reports hold no personal data (level, cafe, random anonymous uid, time),
-      // so the dashboard can read them without signing in.
+      // Reports hold no personal data (cafe, queue size, random anonymous uid,
+      // time), so the dashboard can read them without signing in.
       allow read: if true;
 
-      // v2: every NEW report carries queue_count, and its colour must be the one
-      // that count maps to, so nobody can post count=1 with level=red.
-      // Thresholds MUST match LEVEL_THRESHOLDS in public/js/config.js
-      // (greenMax 2, yellowMax 6); tests/rules-sync.test.js checks this.
-      // Old colour-only reports already stored stay readable; they just can't
-      // be created any more.
-      allow create: if request.auth != null
+      allow create: if signedIn()
         && request.resource.data.keys().hasAll(['cafe_id', 'queue_count', 'level', 'uid', 'created_at'])
         && request.resource.data.keys().hasOnly(['cafe_id', 'queue_count', 'level', 'uid', 'created_at', 'acc'])
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.queue_count is int
-        && request.resource.data.queue_count >= 0
-        && request.resource.data.queue_count <= 100
+        && isInt(request.resource.data.queue_count, 0, 100)
         && request.resource.data.level == levelFor(request.resource.data.queue_count)
-        && request.resource.data.cafe_id is string
-        && exists(/databases/$(database)/documents/cafes/$(request.resource.data.cafe_id))
+        && cafeExists(request.resource.data.cafe_id)
         && request.resource.data.created_at == request.time
-        && (!('acc' in request.resource.data)
-            || (request.resource.data.acc is number && request.resource.data.acc >= 0));
+        && (optional(request.resource.data, 'acc') || isNum(request.resource.data.acc, 0, 100000));
 
+      allow update, delete: if false;
+    }
+
+    // ---------- feedback (ML labels) ----------
+    function validFeedback(d) {
+      return d.keys().hasAll(['cafe_id', 'actual_total_min', 'uid', 'created_at'])
+        && d.keys().hasOnly(['cafe_id', 'item_id', 'item_prep_min', 'queue_count_at_report', 'est_total_min',
+                             'actual_total_min', 'started_at', 'uid', 'created_at'])
+        && d.uid == request.auth.uid
+        && d.created_at == request.time
+        && cafeExists(d.cafe_id)
+        && isInt(d.actual_total_min, 1, 120)
+        && (optional(d, 'item_id') || (d.item_id is string && d.item_id.size() <= 120))
+        && (optional(d, 'item_prep_min') || isNum(d.item_prep_min, 0, 60))
+        && (optional(d, 'queue_count_at_report') || isInt(d.queue_count_at_report, 0, 100))
+        && (optional(d, 'est_total_min') || isNum(d.est_total_min, 0, 300))
+        && (optional(d, 'started_at') || (d.started_at is timestamp
+              && d.started_at <= request.time
+              && d.started_at > request.time - duration.value(6, 'h')));
+    }
+    match /feedback/{id} {
+      allow read: if isAdmin();
+      allow create: if signedIn() && validFeedback(request.resource.data);
       allow update, delete: if false;
     }
 

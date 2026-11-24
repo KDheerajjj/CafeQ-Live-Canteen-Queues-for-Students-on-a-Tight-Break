@@ -26,6 +26,64 @@ export function queueText(count) {
   return count == null ? "" : `~${Math.round(count)} in line`;
 }
 
+/** Status as icon + text (+ colour as a third, optional cue). Colour-blind safe. */
+export function statusLabelHtml(level) {
+  const l = LEVELS[level] || LEVELS.unknown;
+  return `<span class="status-label ${esc(level)}"><span class="icon" aria-hidden="true">${l.icon}</span>${esc(l.label)}</span>`;
+}
+
+/** Estimate text with its method, e.g. "~9 min for Masala Dosa (est.)". */
+export function estimateText(est, item) {
+  if (!est || est.min == null) return "Wait unknown";
+  const what = item ? ` for ${item.name}` : " wait";
+  const how = est.method === "model" ? "est., ML model" : est.method === "fallback" ? "rough est." : "est.";
+  return `~${est.min} min${what} (${how})`;
+}
+
+// ---------- the student's intended item per cafe (remembered on this device) ----------
+const ITEM_KEY = "cafeq.itemChoice";
+
+export function getItemChoices() {
+  try {
+    return JSON.parse(localStorage.getItem(ITEM_KEY) || "{}") || {};
+  } catch {
+    return {};
+  }
+}
+
+export function setItemChoice(cafeId, itemId) {
+  const all = getItemChoices();
+  if (itemId) all[cafeId] = itemId;
+  else delete all[cafeId];
+  try {
+    localStorage.setItem(ITEM_KEY, JSON.stringify(all));
+  } catch {
+    /* not remembered; still works for this page view */
+  }
+}
+
+/**
+ * The chosen item for a cafe, but only if it's still on the menu AND available
+ * (sold-out items are never used for estimates).
+ */
+export function chosenItem(cafeId, items) {
+  const id = getItemChoices()[cafeId];
+  return (items || []).find((it) => it.id === id && it.available !== false) || null;
+}
+
+/** "What will you order?" picker. Sold-out items are hidden. Empty menu -> "". */
+export function itemSelectHtml(cafe, items, selected) {
+  const avail = (items || []).filter((it) => it.available !== false);
+  if (avail.length === 0) return "";
+  const opts = avail
+    .map((it) => `<option value="${esc(it.id)}"${selected && selected.id === it.id ? " selected" : ""}>${esc(it.name)} (~${esc(it.prep_min)} min to make)</option>`)
+    .join("");
+  return `<label class="item-pick">Your order:
+      <select data-item-for="${esc(cafe.id)}" aria-label="What will you order at ${esc(cafe.name)}?">
+        <option value="">Not sure / anything quick</option>${opts}
+      </select></label>`;
+}
+
 /** Show a friendly notice in place of the page content (setup / errors). */
 export function showNotice(container, title, body) {
   container.innerHTML = `<div class="notice" role="status"><strong>${esc(title)}</strong><p>${esc(body)}</p></div>`;

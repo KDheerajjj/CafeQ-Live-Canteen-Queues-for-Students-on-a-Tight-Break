@@ -10,13 +10,17 @@
   <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
+  <script>/* theme before first paint: saved choice, else the phone setting (see js/theme.js) */try{var t=localStorage.getItem("cafeq.theme");if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="dark"}</script>
   <link rel="stylesheet" href="./css/styles.css">
 </head>
 <body>
   <main class="wrap">
     <header class="top">
       <a class="logo" href="./">CafeQ</a>
-      <span id="live" class="live off">connecting…</span>
+      <div class="top-actions">
+        <span id="live" class="live off">connecting…</span>
+        <button id="theme-toggle" class="theme-toggle" type="button">Theme</button>
+      </div>
     </header>
     <p class="tagline">One short break? See which cafe you can eat at and still get back to class.</p>
 
@@ -31,6 +35,8 @@
       ⚠ Walk times are placeholders, not measured yet.
     </div>
 
+    <div id="feedback"></div>
+
     <section aria-live="polite">
       <div id="loading" class="spinner" aria-label="Loading"></div>
       <div id="empty" class="empty" hidden>
@@ -42,13 +48,17 @@
     </section>
 
     <p class="fineprint">
-      Queue lengths are tapped in by students standing at each counter in the last 15 minutes;
+      Queue lengths are tapped in by students standing at each counter recently;
       "~N in line" is the median of those reports.
-      Wait times are <strong>estimates</strong>: queue length × each counter's assumed serving speed
-      (canteen ≈ 60 s per person, cafes ≈ 45 s, still to be calibrated by observation), not measurements.
+      Times are <strong>estimates</strong>: queue length × each counter's assumed serving speed
+      (canteen ≈ 60 s per person, cafes ≈ 45 s, still to be calibrated), × a congestion factor when
+      it's packed, + the time to make your order (the item's prep time if you pick one).
+      <span id="est-note"></span>
       CafeQ collects no personal data.
     </p>
   </main>
+
+  <script type="module" src="./js/theme.js"></script>
 
   <script type="module" src="./js/dashboard.js"></script>
 </body>

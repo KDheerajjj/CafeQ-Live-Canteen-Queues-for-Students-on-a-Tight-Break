@@ -1,0 +1,372 @@
+{
+  "_comment": "FILL-IN TEMPLATE for Cafe Mingos. Item names and categories were transcribed from photos of the menu board taken on 24 Nov 2026 (Cafe Menu Photos/Cafe Mingos, 2 photos; the photos are kept out of the repo). Spelling is as on the board. Prices are deliberately not copied. prep_min and source are EMPTY ON PURPOSE: prep_min = average minutes to MAKE one serving, entered only from the vendor (source \"vendor\") or by timing servings (source \"observed\"); \"estimate\" only for an honest rough guess. Items without a prep_min are NOT loaded by npm run seed. You can also enter everything on /admin.html instead.",
+  "cafe_id": "cafe-c",
+  "items": [
+    {
+      "name": "Coffee/Tea",
+      "category": "Hot Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Lemon Tea/Green Tea",
+      "category": "Hot Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cappacinno",
+      "category": "Hot Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Café Mocha",
+      "category": "Hot Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Café Latte",
+      "category": "Hot Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Café Expresso",
+      "category": "Hot Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Hot Chocolate",
+      "category": "Hot Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Lemon Ice Tea",
+      "category": "Cold Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cold Orange/Lemonade",
+      "category": "Cold Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cold Coffee",
+      "category": "Cold Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cold Chocolate",
+      "category": "Cold Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cold Mocha",
+      "category": "Cold Beverages",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Maggi (Masala)",
+      "category": "Maggi",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Maggi (Extra Masala / Corn / Peri Peri)",
+      "category": "Maggi",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Maggi",
+      "category": "Maggi",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Egg Bhurji Maggi",
+      "category": "Maggi",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg / Chicken Momo",
+      "category": "Momos",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg / Chicken Momo Chat",
+      "category": "Momos",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg / Chicken Manchurian",
+      "category": "Momos",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Potato Pop",
+      "category": "Quick Bites",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "French Fries",
+      "category": "Quick Bites",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Peri Peri Fries",
+      "category": "Quick Bites",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Jungli Fungli",
+      "category": "Quick Bites",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Non Veg Jungli Fungli",
+      "category": "Quick Bites",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Popcorn",
+      "category": "Quick Bites",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Vada Pav",
+      "category": "Buns",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Vada Pav",
+      "category": "Buns",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Bun Samosa",
+      "category": "Buns",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese / Peri Peri Bun Samosa",
+      "category": "Buns",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Burger",
+      "category": "Buns",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Burger",
+      "category": "Buns",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Barbeque Chicken Burger",
+      "category": "Buns",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Crispy Chicken Burger",
+      "category": "Buns",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Peri Peri Chicken Burger",
+      "category": "Buns",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg / Egg / Chicken",
+      "category": "Chinese",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Chinese Combo",
+      "category": "Chinese",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Non Veg Chinese combo",
+      "category": "Chinese",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Sandwich",
+      "category": "Sandwiches & Sub",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Corn Mayo Sandwich",
+      "category": "Sandwiches & Sub",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Corn Cheese Sandwich",
+      "category": "Sandwiches & Sub",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Sandwich",
+      "category": "Sandwiches & Sub",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Sandwich",
+      "category": "Sandwiches & Sub",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Barbeque /Peri Peri Chicken Sandwich",
+      "category": "Sandwiches & Sub",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Cheese Sandwich",
+      "category": "Sandwiches & Sub",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Panner Sub",
+      "category": "Sandwiches & Sub",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Barbeque /Peri Peri Chicken Sub",
+      "category": "Sandwiches & Sub",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Pasta Creamy Alfredo (white sauce)",
+      "category": "Pasta",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Peri Peri Mac n Cheese",
+      "category": "Pasta",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Veg Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Paneer Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Egg Chicken roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese chicken Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Barbeque Chicken Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Peri Peri Chicken Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Crispy Chicken Roll",
+      "category": "Rolls",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Biryani",
+      "category": "Combos",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Kabab Biryani",
+      "category": "Combos",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Chicken Curry Combo",
+      "category": "Combos",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Butter Pav Bhaji",
+      "category": "Combos",
+      "prep_min": null,
+      "source": ""
+    },
+    {
+      "name": "Cheese Pav Bhaji",
+      "category": "Combos",
+      "prep_min": null,
+      "source": ""
+    }
+  ]
+}

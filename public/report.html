@@ -9,13 +9,17 @@
   <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
+  <script>/* theme before first paint: saved choice, else the phone setting (see js/theme.js) */try{var t=localStorage.getItem("cafeq.theme");if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="dark"}</script>
   <link rel="stylesheet" href="./css/styles.css">
 </head>
 <body>
   <main class="wrap">
     <header class="top">
       <a class="logo" href="./">CafeQ</a>
-      <a class="back" href="./">All cafes →</a>
+      <div class="top-actions">
+        <a class="back" href="./">All cafes →</a>
+        <button id="theme-toggle" class="theme-toggle" type="button">Theme</button>
+      </div>
     </header>
 
     <h1 id="cafe-name">Report crowd</h1>
@@ -68,6 +72,8 @@
       it is not stored (only GPS accuracy in metres is kept).
     </p>
   </main>
+
+  <script type="module" src="./js/theme.js"></script>
 
   <script type="module" src="./js/report.js"></script>
 </body>
