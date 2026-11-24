@@ -151,10 +151,14 @@ allow location, and tap a queue size; the dashboard on another phone should show
 within a second or two. Turn on airplane mode and reopen the app: the shell should still load.
 
 **Every deploy that changes the UI or icons: bump the service-worker cache.** Change
-`CACHE_VERSION` in `public/service-worker.js` (e.g. `cafeq-cache-v5` → `v6`), and add any new
+`CACHE_VERSION` in `public/service-worker.js` (e.g. `cafeq-cache-v6` → `v7`), and add any new
 file to its `SHELL` list. On activate, the worker deletes every cache with a different name.
 Without the bump, installed apps keep showing the **old** cached icon and pages. To change the
 icon, replace `assets/icon-source.png` (ideally ≥ 1024 px square), run `npm run icons`, then bump.
+
+`firebase.json` also serves every file with `Cache-Control: no-cache`: the browser revalidates
+each file with a cheap ETag check instead of reusing it for an hour, which is Firebase Hosting's default. The
+service worker precaches with `cache: "reload"`, so a new version never stores a stale file.
 
 ## Data model
 

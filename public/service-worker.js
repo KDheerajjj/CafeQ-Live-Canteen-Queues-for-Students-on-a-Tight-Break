@@ -13,7 +13,7 @@
 // The activate handler deletes every cache whose name differs, so installed
 // apps drop the old icon/UI instead of serving stale copies.
 
-const CACHE_VERSION = "cafeq-cache-v5";
+const CACHE_VERSION = "cafeq-cache-v6";
 const SHELL = [
   "./",
   "./index.html",
@@ -39,7 +39,14 @@ const SHELL = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // cache: "reload" bypasses the browser's HTTP cache, so a new version never
+  // precaches a stale copy of a file (e.g. the old icon) from before the deploy.
+  event.waitUntil(
+    caches
+      .open(CACHE_VERSION)
+      .then((c) => c.addAll(SHELL.map((url) => new Request(url, { cache: "reload" }))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener("activate", (event) => {
@@ -75,9 +82,11 @@ self.addEventListener("fetch", (event) => {
   // Anything else cross-origin (Firestore, Auth, ...) -> leave to the network.
   if (url.origin !== self.location.origin) return;
 
-  // Same-origin app shell -> network-first, cache fallback.
+  // Same-origin app shell -> network-first, cache fallback. "no-cache" makes the
+  // browser revalidate with the server (cheap 304 via ETag) instead of reusing
+  // an HTTP-cached copy, so a deploy shows up on the next load.
   event.respondWith(
-    fetch(req)
+    fetch(req, { cache: "no-cache" })
       .then((res) => {
         if (res.ok) {
           const copy = res.clone();
