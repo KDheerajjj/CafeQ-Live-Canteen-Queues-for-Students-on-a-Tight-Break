@@ -10,7 +10,7 @@ The live signal is **crowdsourced**: anyone standing at a cafe scans the QR at t
 taps its crowd level (🟢 No wait / 🟡 Short line / 🔴 Packed). It takes about two seconds and
 needs no login and no app install. **Vendors don't need to do anything.**
 
-> **Status: Phase 1.** Cafe names, coordinates and walk times in `seed/cafes.json`, the reference
+> **Status: Phase 1.** Cafe names and counter coordinates are real. Walk times in `seed/cafes.json`, the reference
 > point in `config.js`, and the crowd-level → wait-minutes map are **placeholders**. Replace them
 > with measured values before you present any numbers as real.
 
@@ -65,7 +65,7 @@ public/                    static site: deploys unchanged to Firebase Hosting or
   js/ui.js                 small shared DOM helpers (escaping, labels, notices)
   js/dashboard.js, report.js, worthit.js   page controllers
   manifest.webmanifest, service-worker.js, icons/
-seed/cafes.json            3 placeholder cafes
+seed/cafes.json            the campus cafes (walk times still placeholders)
 scripts/seed-firestore.js  load cafes.json into Firestore (Admin SDK)
 scripts/make-qr.js         qr/<cafe>.png + printable qr/posters.html
 scripts/make-icons.js      regenerate placeholder PWA icons
@@ -108,7 +108,7 @@ You need **Node 22.9 or newer** and a Google account. **Do not enable billing an
    ```powershell
    npm run seed
    ```
-   No CLI? You can also add the three `cafes` documents by hand in the Firestore console, using
+   No CLI? You can also add the `cafes` documents by hand in the Firestore console, using
    the same ids and fields.
 8. **Deploy rules and indexes** (indexes take a few minutes to build):
    ```powershell

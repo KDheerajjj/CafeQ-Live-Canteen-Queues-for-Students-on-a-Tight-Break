@@ -11,7 +11,7 @@
 //
 // Bump CACHE_VERSION when you change the list below.
 
-const CACHE_VERSION = "cafeq-v1";
+const CACHE_VERSION = "cafeq-v2";
 const SHELL = [
   "./",
   "./index.html",
