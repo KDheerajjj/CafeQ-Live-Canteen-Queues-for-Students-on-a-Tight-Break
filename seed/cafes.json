@@ -1,5 +1,5 @@
 {
-  "_comment": "Names and counter coordinates are real (supplied by the team, Nov 2026). walk_min values and location_desc are still PLACEHOLDERS: time the walk from REFERENCE_POINT in public/js/config.js and replace them, then set \"placeholder\": false. NOTE: cafe-b and cafe-d currently share the same coordinates; confirm the library counter's position. Run `npm run seed` after editing.",
+  "_comment": "Names and counter coordinates are real (supplied by the team, Nov 2026). walk_min values and location_desc are still PLACEHOLDERS: time the walk from REFERENCE_POINT in public/js/config.js and replace them, then set \"placeholder\": false. cafe-b and cafe-d share the same coordinates (confirmed: same location). Run `npm run seed` after editing.",
   "cafes": [
     {
       "id": "cafe-a",
