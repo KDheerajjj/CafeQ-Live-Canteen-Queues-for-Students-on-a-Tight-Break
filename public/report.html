@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CafeQ — report crowd</title>
+  <meta name="theme-color" content="#7a3e12">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <a class="logo" href="./">CafeQ</a>
+      <a class="back" href="./">All cafes →</a>
+    </header>
+
+    <h1 id="cafe-name">Report crowd</h1>
+    <p id="cafe-desc" class="tagline"></p>
+
+    <!-- Exactly one of the sections below is visible at a time. -->
+
+    <section id="s-loading" class="center">
+      <div class="spinner" aria-hidden="true"></div>
+      <p id="loading-text" class="hint">Loading…</p>
+    </section>
+
+    <section id="s-message" hidden>
+      <div class="notice" role="alert">
+        <strong id="msg-title"></strong>
+        <p id="msg-body"></p>
+      </div>
+      <button id="retry" class="btn secondary" type="button" hidden>Try again</button>
+    </section>
+
+    <section id="s-choose" hidden>
+      <p><strong>How busy is it right now?</strong> One tap.</p>
+      <div class="levels">
+        <button class="level-btn green" data-level="green" type="button">
+          <span class="emoji" aria-hidden="true">🟢</span><span>No wait<small>Walk up and order</small></span>
+        </button>
+        <button class="level-btn yellow" data-level="yellow" type="button">
+          <span class="emoji" aria-hidden="true">🟡</span><span>Short line<small>A few people ahead</small></span>
+        </button>
+        <button class="level-btn red" data-level="red" type="button">
+          <span class="emoji" aria-hidden="true">🔴</span><span>Packed<small>Long queue / crowded</small></span>
+        </button>
+      </div>
+      <p id="distance-note" class="hint"></p>
+    </section>
+
+    <section id="s-thanks" hidden>
+      <div class="notice" role="status">
+        <strong>Thanks — that helps everyone on a tight break. 🙌</strong>
+        <p id="thanks-note"></p>
+      </div>
+      <h2>Current status</h2>
+      <div class="status-big"><span id="now-dot" class="dot"></span><span id="now-label">…</span></div>
+      <p id="now-meta" class="hint"></p>
+      <p><a class="btn secondary" href="./">See all cafes</a></p>
+    </section>
+
+    <p class="fineprint">
+      Reports are anonymous. We check your location once, only to confirm you're at the cafe —
+      it is not stored (only GPS accuracy in metres is kept).
+    </p>
+  </main>
+
+  <script type="module" src="./js/report.js"></script>
+</body>
+</html>

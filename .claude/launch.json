@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "cafeq",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "uvicorn", "backend.main:app", "--port", "8000"],
-      "port": 8000
+      "name": "cafeq-static",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--yes", "http-server", "public", "-p", "5000", "-c-1"],
+      "port": 5000
     }
   ]
 }

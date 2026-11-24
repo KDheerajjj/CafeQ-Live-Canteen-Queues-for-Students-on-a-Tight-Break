@@ -1,0 +1,22 @@
+{
+  "name": "cafeq",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CafeQ — live, crowdsourced cafe crowd levels for RVCE day scholars (Phase 1).",
+  "type": "module",
+  "license": "SEE LICENSE IN LICENSE",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\"",
+    "serve": "npx --yes http-server public -p 5000 -c-1",
+    "seed": "node --env-file-if-exists=.env scripts/seed-firestore.js",
+    "qr": "node --env-file-if-exists=.env scripts/make-qr.js",
+    "icons": "node scripts/make-icons.js",
+    "deploy:rules": "npx --yes firebase-tools deploy --only firestore",
+    "deploy:hosting": "npx --yes firebase-tools deploy --only hosting"
+  },
+  "engines": { "node": ">=22.9" },
+  "devDependencies": {
+    "firebase-admin": "^12.7.0",
+    "qrcode": "^1.5.4"
+  }
+}

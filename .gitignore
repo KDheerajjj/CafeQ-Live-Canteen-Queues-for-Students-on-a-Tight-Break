@@ -1,24 +1,30 @@
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.pytest_cache/
-venv/
-.venv/
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+package-lock.json.bak
 
-# Secrets — never commit real keys or PINs
+# Firebase
+.firebase/
+.firebaserc
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+*-debug.log
+
+# Secrets — NEVER commit these
 .env
+*.key
+service-account*.json
+*-adminsdk-*.json
 
-# Local databases and generated artefacts
-data/*.db
-data/*.db-journal
-data/*.db-wal
-data/*.db-shm
-backend/ml/model.joblib
-backend/ml/model_meta.json
+# Generated QR output (regenerate with `npm run qr`)
+qr/*.png
+qr/posters.html
 
-# Editors / OS
-.vscode/
-.idea/
+# OS / editor
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
+.vercel

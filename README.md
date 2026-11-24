@@ -1,327 +1,260 @@
-# Data-Driven Wait-Time Visibility and Load Balancing Across Multiple Campus Cafes
+# CafeQ: Live Canteen Queues for Students on a Tight Break
 
-**CafeQ** — a mobile-first Progressive Web App (PWA) that shows live and predicted crowd levels and
-wait times across campus cafes, so students can decide *where* and *whether* to eat during short
-academic breaks — and so demand spreads out instead of piling onto one counter.
+CafeQ is a free, installable mobile web app (PWA) that shows **day scholars at RV College of
+Engineering** how crowded each campus cafe is right now, so they can choose where to eat in a
+short break and still get back to class on time.
 
-> **Academic context:** DTL (Design Thinking Lab) project — 2nd Year CSE, RV College of Engineering, Bengaluru.
+The live signal is **crowdsourced**: anyone standing at a cafe scans the QR at the counter and
+taps its crowd level (🟢 No wait / 🟡 Short line / 🔴 Packed). It takes about two seconds and
+needs no login and no app install. **Vendors don't need to do anything.**
 
----
-
-## Problem statement
-
-Students at RVCE face unpredictable wait times across 3–5 campus cafes during 15–30 minute breaks.
-With no visibility into which cafe is busy, students waste their break in long queues, skip meals,
-or all crowd the nearest cafe — creating uneven demand and a poor experience for everyone.
-
-**Research backing**
-
-- A participatory observational study at VIT Vellore (250 observations, 5 canteens) found that
-  dissatisfaction correlates more with uncertainty, congestion and lack of information than with
-  actual wait duration (Pusuluri, 2024).
-- A crowdsourced queue-estimation system at the University of Oulu reached ~2 minute mean absolute
-  error with only ~7% of customers contributing (Goncalves et al., CSCW 2016).
-
-CafeQ applies both findings: remove uncertainty with an honest live status, and let a small number
-of crowd reports plus one-tap vendor updates do the work — at zero cost.
+> **Status: Phase 1.** Cafe names, coordinates and walk times in `seed/cafes.json`, the reference
+> point in `config.js`, and the crowd-level → wait-minutes map are **placeholders**. Replace them
+> with measured values before you present any numbers as real.
 
 ---
 
-## Features
-
-| Feature | Where |
-|---|---|
-| Live 🟢/🟡/🔴 status per cafe, auto-refresh every 30 s | `index.html`, `status_engine.py` |
-| Vendor one-tap status + "ORDER SERVED ✓" counter (PIN-protected) | `vendor.html`, `routers/orders.py` |
-| Anonymous student crowd reports with anti-spam cooldown | `routers/crowdsource.py` |
-| **Stale-data rule:** anything older than 15 min shows grey "Unknown" — never a stale green | backend **and** browser |
-| "Is it worth waiting?" — walk + wait + eating time vs. time before class, suggests a better cafe | `worthit_engine.py` |
-| "Best time to visit" heatmap (Mon–Sun × 8am–8pm) | `heatmap.js`, `routers/history.py` |
-| Push reminder 10 min before your break: `Cafe A 🟢 Free \| Cafe B 🟡 ~8 min \| Cafe C 🔴 Busy` | `notification_service.py`, `sw.js` |
-| Wait prediction: baseline lookup + RandomForest, RF used only if it beats the baseline | `prediction_engine.py`, `ml/` |
-| Installable PWA, dark mode, 360 px+ layouts, 48–80 px touch targets | `manifest.json`, `style.css` |
+## Contents
+- [How it works](#how-it-works)
+- [Project layout](#project-layout)
+- [Setup (free, about 15 minutes)](#setup-free-about-15-minutes)
+- [Deploy](#deploy)
+- [Data model](#data-model)
+- [Status engine](#status-engine)
+- ["Will I make it?" maths](#will-i-make-it-maths)
+- [Trust model and its limits (read this)](#trust-model-and-its-limits-read-this)
+- [Cost: why this stays free](#cost-why-this-stays-free)
+- [Testing](#testing)
+- [Future work](#future-work)
 
 ---
 
-## Architecture
+## How it works
 
 ```
- STUDENT PHONE (PWA)                          VENDOR PHONE
- ┌───────────────────────────────┐            ┌─────────────────────────────┐
- │ index.html                    │            │ vendor.html (PIN)           │
- │  app.js        cards, modals  │            │  [🟢 FREE] [🟡 MODERATE]    │
- │  heatmap.js    best-time grid │            │  [🔴 BUSY]                  │
- │  notifications.js  opt-in     │            │  [ORDER SERVED ✓] Orders: 87│
- │  sw.js  (push receiver)       │            └──────────────┬──────────────┘
- └──────┬──────────────▲─────────┘                           │ X-Vendor-PIN
-        │ fetch /api/* │ Web Push (delivered by FCM)         │
-        ▼              │                                     ▼
- ┌─────────────────────┴──────────────────────────────────────────────────┐
- │ FastAPI on Render (backend/main.py) — serves API + static frontend     │
- │                                                                        │
- │  routers/   status · crowdsource · orders · predict · history ·        │
- │             notify · admin                                             │
- │  services/  status_engine · prediction_engine · worthit_engine ·       │
- │             notification_service (1-min loop) · sheets_logger (opt.)   │
- │  database.py  plain SQL                                                │
- └───────────────┬────────────────────────────────────────┬───────────────┘
-                 ▼                                        ▼
-     SQLite (dev) / Supabase Postgres (prod)     ml/model.joblib
-     cafes · status_updates · order_logs ·       (ml/train.py; hot-reloaded)
-     crowd_reports · push_subscribers · predictions
+ Student at the counter                         Student deciding where to eat
+ ─────────────────────                          ────────────────────────────
+ scans QR → report.html?cafe=cafe-a             opens index.html / worthit.html
+   1. load cafe (name, lat/lng, geofence)         realtime listeners on:
+   2. silent anonymous sign-in                      • cafes
+   3. cooldown check (3 min / device)               • reports from the last 15 min
+   4. GPS → haversine → within geofence?          status-engine.js (in the browser)
+   5. tap 🟢/🟡/🔴 → append to `reports`            → status, confidence, est. wait
+                │                                  → sorted cards / Go-Risky-Skip
+                └──────────► Firestore ◄───────────┘
 ```
 
-**Status trust rules** (`backend/services/status_engine.py`):
+No status is ever stored. Every screen recomputes it from recent reports, so an old status
+can't get stuck.
 
-1. Vendor update in the last 15 min → use it (confidence *high*).
-2. Else 2+ crowd reports in the last 10 min → most common status; ties → the worse level (*medium*).
-3. Else 1 crowd report in the last 10 min → use it (*low* confidence, shown on the card).
-4. Else → **Unknown** (grey), no wait estimate.
+## Project layout
 
-Wait ranges: green 0–5 min, yellow 5–12 min, red 12+ min. More detail: [docs/architecture.md](docs/architecture.md).
+```
+public/                    static site: deploys unchanged to Firebase Hosting or Vercel
+  index.html               dashboard (view side)
+  report.html              report crowd (update side, opened by QR: ?cafe=ID)
+  worthit.html             "Will I make it?" checker
+  css/styles.css
+  js/config.js             public Firebase web config + every tunable constant
+  js/firebase-init.js      init app, anonymous auth, service-worker registration
+  js/status-engine.js      PURE: reports → status/confidence; sort; trip verdicts
+  js/geo.js                PURE: haversine distance, geofence, walk estimate
+  js/data.js               shared realtime Firestore listeners (dashboard + worth-it)
+  js/ui.js                 small shared DOM helpers (escaping, labels, notices)
+  js/dashboard.js, report.js, worthit.js   page controllers
+  manifest.webmanifest, service-worker.js, icons/
+seed/cafes.json            3 placeholder cafes
+scripts/seed-firestore.js  load cafes.json into Firestore (Admin SDK)
+scripts/make-qr.js         qr/<cafe>.png + printable qr/posters.html
+scripts/make-icons.js      regenerate placeholder PWA icons
+tests/                     Node unit tests for the pure modules
+firestore.rules, firestore.indexes.json, firebase.json, vercel.json
+```
 
----
+There's no framework and no build step. The browser loads the Firebase SDK as ES modules
+straight from Google's CDN.
 
-## Roadmap
+## Setup (free, about 15 minutes)
 
-### Phase 0: Foundation (Weeks 1–2)
-- [x] Student needs-assessment survey (Google Forms, Oct 3–7 2026, ~60 responses) — summarise in [data/sample_survey_summary.md](data/sample_survey_summary.md)
-- [x] Literature review (VIT queue study, Oulu crowdsourcing paper)
-- [x] Technology stack selection
-- [x] Architecture decision: PWA + FastAPI + SQLite
-- [ ] Vendor stakeholder interviews (2–3 cafe operators)
-- [ ] Ethics/permission from admin or DTL faculty
+You need **Node 22.9 or newer** and a Google account. **Do not enable billing anywhere.**
 
-### Phase 1: Live Status Dashboard (Weeks 3–5)
-- [x] Database schema and seed data for 3 cafes
-- [x] FastAPI backend with status, crowdsource and order endpoints
-- [x] Student dashboard (mobile-first status cards, report modal)
-- [x] Vendor dashboard (PIN login, status buttons, order-served button, daily stats)
-- [x] Stale-data rule: status older than 15 min shown as "Unknown"
-- [ ] 3–5 day manual data collection at 1–2 cafes during peak hours
-- [ ] Deploy to Render.com free tier
+1. **Create a Firebase project** at <https://console.firebase.google.com>. Stay on the
+   **Spark (free)** plan and skip Google Analytics.
+2. **Enable Anonymous Auth**: Build → Authentication → Get started → Sign-in method →
+   Anonymous → Enable.
+3. **Create Firestore**: Build → Firestore Database → Create database → *production mode* →
+   pick a region near Bengaluru (e.g. `asia-south1`).
+4. **Register a web app**: Project settings → Your apps → `</>` (Web). Copy the `firebaseConfig`
+   object into `FIREBASE_CONFIG` in [`public/js/config.js`](public/js/config.js). This config is
+   public by design; access is controlled by `firestore.rules`.
+5. **Install script dependencies and configure:**
+   ```powershell
+   npm install
+   copy .env.example .env      # then edit FIREBASE_PROJECT_ID and CAFEQ_BASE_URL
+   npx firebase-tools login
+   npx firebase-tools use --add   # pick your project (writes .firebaserc, which is git-ignored)
+   ```
+6. **Measure your cafes.** Edit `seed/cafes.json`: stand at each counter and read the GPS lat/lng
+   (Google Maps → long-press), time the walk from the reference point, set `geofence_m`
+   (90 m is a sensible start), and set `"placeholder": false`. Update `REFERENCE_POINT` in
+   `config.js` the same way.
+7. **Seed the cafes.** `cafes` is read-only to clients, so seeding uses the Admin SDK. Pick one
+   of these credential options; **none of them puts a key in the repo**:
+   - `gcloud auth application-default login` (no key file), **or**
+   - download a service-account key (Project settings → Service accounts), save it **outside
+     this folder**, and set `GOOGLE_APPLICATION_CREDENTIALS` in `.env` to its path.
+   ```powershell
+   npm run seed
+   ```
+   No CLI? You can also add the three `cafes` documents by hand in the Firestore console, using
+   the same ids and fields.
+8. **Deploy rules and indexes** (indexes take a few minutes to build):
+   ```powershell
+   npm run deploy:rules
+   ```
 
-### Phase 2: Decision Support + Notifications (Weeks 6–8)
-- [x] "Is it worth waiting?" engine and API endpoint
-- [ ] Walk-time data between buildings and cafes (manually measured — seed values are placeholders)
-- [x] Historical heatmap: "best time to visit" by day and hour
-- [x] Web Push via FCM (VAPID) + service worker
-- [x] Notification scheduler: 10-min-before-break alerts
-- [ ] Test push on students' Android phones
-- [ ] Optional Telegram channel auto-posting status every 15 min
+Local preview: `npm run serve`, then open <http://localhost:5000>. Browsers allow geolocation on
+`localhost`, so the report flow works locally too, but your GPS has to be inside a cafe's
+geofence.
 
-### Phase 3: ML Prediction (Weeks 9–11)
-- [x] Baseline: historical avg wait by (cafe, day_of_week, 30-min slot)
-- [x] Features: hour, minute_bin, day_of_week, orders_last_15min
-- [x] RandomForestRegressor (scikit-learn), trained only with 200+ rows per cafe
-- [x] Leave-one-day-out cross-validation; baseline MAE always reported next to RF MAE
-- [x] Automatic fallback to baseline (with a logged warning) if RF doesn't win
-- [x] Synthetic data generator for demo (clearly labelled)
-- [ ] Train and evaluate on **real** collected data; report the result honestly
+## Deploy
 
-### Phase 4: Polish + Report (Weeks 12–13)
-- [ ] Quick-item suggestions (if per-item prep data is available)
-- [ ] UI polish from user testing
-- [ ] Final project report (academic format)
-- [ ] Presentation slides, poster, demo video
+**Firebase Hosting (free):**
+```powershell
+npm run deploy:hosting
+```
+Your app is then live at `https://<project-id>.web.app` over HTTPS, which geolocation and PWA
+install both need.
 
----
+**Vercel (alternative, also free):** import the repo and set the output directory to `public`
+(`vercel.json` already does this). No build command. Then add the Vercel domain under Firebase
+console → Authentication → Settings → **Authorized domains**.
 
-## Tech stack
+**QR posters:** set `CAFEQ_BASE_URL` in `.env` to the live HTTPS URL, then:
+```powershell
+npm run qr
+```
+This writes `qr/cafe-a.png` and the rest, plus `qr/posters.html`. Open the posters page, print
+it, and stick one at each counter.
 
-| Layer | Technology | Cost |
+**Verify on a phone:** open the URL in Android Chrome and confirm the dashboard loads. Use
+⋮ → *Install app*. Scan a QR at the counter, allow location, and tap a level; the dashboard on
+another phone should update within a second or two. Turn on airplane mode and reopen the app:
+the shell should still load.
+
+## Data model
+
+**`cafes/{id}`**: seeded, rarely changes, read-only to clients.
+
+| field | type | meaning |
 |---|---|---|
-| Backend | Python 3.11+ / FastAPI | Free |
-| Database | SQLite (dev) / Supabase PostgreSQL (prod) | Free |
-| Frontend | Vanilla HTML + CSS + JavaScript (no framework) | Free |
-| Push notifications | Web Push API + VAPID via `pywebpush`, delivered by Firebase Cloud Messaging | Free |
-| Hosting | Render.com | Free tier |
-| ML | scikit-learn (RandomForestRegressor), pandas, joblib | Free |
-| Version control | GitHub | Free |
+| *(doc id)* | string | e.g. `cafe-a`; used in QR links |
+| `name` | string | display name |
+| `location_desc` | string | human description of where it is |
+| `lat`, `lng` | number | counter location |
+| `geofence_m` | number | max distance (m) from which a report is accepted |
+| `walk_min` | number | typical walk (min) from the day-scholar reference point |
+| `placeholder` | bool | `true` while data is unmeasured; the UI shows a warning |
 
----
+**`reports/{auto-id}`**: append-only, one document per tap.
 
-## Getting started
-
-### Prerequisites
-- Python 3.11+
-- Git
-- Chrome (to test push notifications)
-
-### Setup
-
-```bash
-git clone https://github.com/YOUR-USERNAME/data-driven-cafe-wait-time.git
-cd data-driven-cafe-wait-time
-
-python -m venv venv
-venv\Scripts\activate                 # macOS/Linux: source venv/bin/activate
-pip install -r requirements.txt
-
-copy .env.example .env                # macOS/Linux: cp .env.example .env
-# edit .env — at least change VENDOR_PIN and ADMIN_API_KEY
-
-python scripts/seed_db.py
-uvicorn backend.main:app --reload --port 8000
-```
-
-| Page | URL |
-|---|---|
-| Student dashboard | http://localhost:8000/ |
-| Vendor dashboard | http://localhost:8000/vendor.html |
-| API docs (Swagger) | http://localhost:8000/docs |
-
-### Optional: demo data, ML and tests
-
-```bash
-python backend/ml/generate_sample_data.py   # ⚠️ SYNTHETIC — prints a warning every run
-python backend/ml/train.py                  # trains per-cafe models -> backend/ml/model.joblib
-python backend/ml/evaluate.py               # "Baseline MAE: X.X min | RF MAE: Y.Y min"
-python -m pytest backend/tests -q           # 52 tests
-```
-
-### Optional: push notifications
-
-```bash
-python scripts/send_test_notification.py --gen-keys   # paste the keys into .env, restart
-python scripts/send_test_notification.py              # after tapping "Enable" in the dashboard
-```
-
-See [docs/fcm-setup-guide.md](docs/fcm-setup-guide.md) and [docs/deployment-guide.md](docs/deployment-guide.md) (Render + Supabase).
-
----
-
-## API endpoints
-
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| GET | `/api/status` | — | Current status of all cafes |
-| GET | `/api/status/{cafe_id}` | — | Status of one cafe |
-| POST | `/api/status` | Vendor PIN (if `source=vendor`) | Vendor (or student) submits a status |
-| POST | `/api/report` | — | Student reports crowd level |
-| GET | `/api/report/recent/{cafe_id}` | — | Recent crowd reports |
-| POST | `/api/orders` | Vendor PIN | Log an order served |
-| GET | `/api/orders/count/{cafe_id}` | — | Orders in last N min, today, busiest hour |
-| GET | `/api/predict/{cafe_id}` | — | Predicted wait time |
-| GET | `/api/predict/worthit?cafe_id=X&available_minutes=Y` | — | "Is it worth waiting?" |
-| GET | `/api/history/{cafe_id}` | — | Recent real events |
-| GET | `/api/history/heatmap` | — | Best-time-to-visit grid |
-| GET | `/api/notify/vapid-public-key` | — | Push public key |
-| POST | `/api/subscribe` | — | Register for push notifications |
-| DELETE | `/api/subscribe` | — | Unsubscribe |
-| POST | `/api/notify/send` | Admin key | Run reminders now / broadcast |
-| GET | `/api/admin/verify` | Vendor PIN | Vendor login check |
-| GET | `/api/admin/stats` | Admin key | Data-collection statistics |
-| POST | `/api/admin/cafe` | Admin key | Add/update a cafe |
-| GET | `/api/cafes`, `/api/orders/items`, `/api/health` | — | Helpers |
-
-Full request/response examples: [docs/api-reference.md](docs/api-reference.md). Schema: [docs/data-dictionary.md](docs/data-dictionary.md).
-
----
-
-## Data collection & ethics
-
-- **Vendor input:** one tap per status change; one tap per order served (optionally with the item and prep time).
-- **Student crowdsourcing:** anonymous one-tap reports; per-client cooldown against spam.
-- **Manual observation (planned):** team members log queue length and wait time during peak hours for 3–5 days per cafe.
-- No personal data is collected — no names, accounts, photos or locations. Push subscriptions store only the browser's opaque endpoint and the chosen break time.
-- Vendor participation is voluntary.
-- **Synthetic data is labelled at every level:** `source='synthetic'` on every row, a printed warning on every generator run, "SYNTHETIC demo data" in every prediction explanation and heatmap that uses it. Live status, vendor stats and order counts ignore synthetic rows completely.
-
----
-
-## ML model details
-
-**Target:** `order_logs.estimated_prep_minutes` — minutes from ordering to being served.
-
-**Baseline (always computed first):** mean wait per (cafe, day_of_week, 30-minute slot), backing
-off to per-slot and then overall means. A lookup table, no ML — the benchmark any model must beat.
-
-**RandomForestRegressor:** features `hour`, `minute_bin` (0/30), `day_of_week`,
-`orders_last_15min`; 100 trees, max depth 8, min 3 samples per leaf. Trained per cafe, only when
-that cafe has **200+ rows**.
-
-**Evaluation:** leave-one-day-out cross-validation (train on every other day, test on the held-out
-day), MAE in minutes. RF is used only if its MAE is lower than the baseline's; otherwise a warning
-is logged and the cafe falls back to the baseline.
-
-**Live correction:** if a vendor/crowd status is currently known, the predicted number is clamped
-into that status's range (e.g. never "3 min" while the vendor says BUSY).
-
-**Current result — synthetic data only (30 simulated days, ~950 rows, seed 42):**
-
-| Cafe | Baseline MAE | RF MAE |
+| field | type | meaning |
 |---|---|---|
-| cafe-a | 1.19 min | 1.00 min |
-| cafe-b | 1.18 min | 1.03 min |
-| cafe-c | 1.07 min | 0.98 min |
+| `cafe_id` | string | must match an existing cafe (enforced by rules) |
+| `level` | `"green"`, `"yellow"` or `"red"` | crowd level (enforced by rules) |
+| `uid` | string | random anonymous-auth id; must equal the writer's uid |
+| `created_at` | timestamp | server time; rules require `== request.time` |
+| `acc` | number (optional) | GPS accuracy in metres, kept for later filtering |
 
-⚠️ These numbers say **nothing about real cafes.** The generator adds uniform ±2 min noise, whose
-own MAE is 1.0 min, so the RF is simply recovering the pattern the generator was told to produce.
-They only show that the pipeline runs end to end.
+No location coordinates, names, emails or device details are stored.
 
-### Honest limitations
-- One semester of data captures routine weekday patterns but cannot generalise to exam weeks,
-  fests, holidays or timetable changes without retraining.
-- The target depends on vendors entering prep times; if few do, the model falls back to typical
-  item times, which are placeholders.
-- Crowd reports are subjective and can be gamed; the cooldown is a speed bump, not security.
-- With a few hundred rows, a RandomForest may well **not** beat the baseline. That is a valid
-  finding and will be reported as such, not hidden.
-- Walk times in `seed/cafes.json` must be replaced with measured values.
-- The PostgreSQL adapter is not covered by the automated tests (they use SQLite).
+## Status engine
 
----
+`public/js/status-engine.js` is pure and unit-tested. For each cafe:
 
-## Project structure
+1. Keep reports from the last **15 min**, newest first.
+2. **0 reports** gives `unknown` (grey) with no confidence. If the newest report is older than
+   15 min, the window is empty, so the status is forced to `unknown`.
+3. Otherwise, **status = mode** (most common level). A tie goes to the level reported most
+   recently.
+4. **Confidence** is `high` if at least 2 reports in the last **10 min** agree with the mode;
+   otherwise `low`.
+5. "updated N min ago" comes from the newest report.
+6. **Estimated wait** comes from `STATUS_WAIT_MIN` in `config.js`: green = 2, yellow = 6,
+   red = 12 min. This is a **placeholder estimate, not a measurement**, until the ML phase.
+
+Dashboard order: cafes you can use soonest come first, sorted by walk plus estimated wait. Packed
+(red) cafes come next, and unknown cafes go last.
+
+## "Will I make it?" maths
 
 ```
-├── backend/
-│   ├── main.py, config.py, database.py
-│   ├── models/      Pydantic models
-│   ├── routers/     status, crowdsource, orders, predict, history, notify, admin
-│   ├── services/    status_engine, prediction_engine, worthit_engine, notification_service, sheets_logger
-│   ├── ml/          generate_sample_data.py, train.py, evaluate.py
-│   ├── seed/        cafes.json
-│   └── tests/       test_status_engine.py, test_worthit_engine.py, test_api.py
-├── frontend/        index.html, vendor.html, css/, js/, sw.js, manifest.json, assets/
-├── docs/            architecture, api-reference, deployment-guide, fcm-setup-guide, data-dictionary
-├── data/            SQLite database (git-ignored), survey summary
-└── scripts/         seed_db.py, send_test_notification.py
+total = walk_min + estimated_wait + eating_buffer (5 min)
+Go    : total ≤ available − 3
+Risky : available − 3 < total ≤ available
+Skip  : total > available
 ```
+- The best **Go** cafe is shown first. If nothing is Go, the app suggests the lowest-total cafe
+  as **grab-and-go only**.
+- Every row shows its maths, for example `3 walk + 6 wait (est.) + 5 eat = 14 min of 15`.
+- A cafe with **no recent report is assumed packed** (red wait), and the app says so, so the
+  verdict errs toward getting you back on time.
+- The spec's formula counts the walk **once**. Tick *Also count the walk back to class* to count
+  both directions.
+- *My current location* replaces `walk_min` with an estimate: straight-line distance × 1.3
+  detour factor ÷ 75 m/min.
 
----
+## Trust model and its limits (read this)
+
+Trust comes from **proximity + agreement + freshness**, not identity:
+- **Proximity:** a report is only accepted from within the cafe's geofence (GPS + haversine).
+- **Agreement:** the status is the *mode* of recent reports, and confidence needs at least 2
+  agreeing reports.
+- **Freshness:** only the last 15 minutes count; anything older becomes `unknown`.
+
+**Enforced server-side by `firestore.rules`:** the writer is signed in and the report carries
+their own uid; the level is valid; the cafe exists; the timestamp is the server's; reports
+can't be edited or deleted; `cafes` can't be written by clients.
+
+**Enforced only client-side in Phase 1:** the **geofence** and the **3-minute cooldown**. Rules
+can't see a phone's GPS, and anonymous accounts are free to create. A determined user who edits
+the JavaScript or calls the Firestore API directly **could bypass both** and post fake reports.
+Mode and confidence limit the damage from a single bad actor, but they don't prevent it.
+
+**Phase-2 hardening** would route reports through a **Cloud Function** that re-checks location,
+rate-limits per uid and IP, and drops outliers. Cloud Functions need the **Blaze (pay-as-you-go)
+plan**, which requires billing, so they are deliberately **not** part of Phase 1. A free partial
+step is **Firebase App Check** with reCAPTCHA, which makes scripted abuse harder.
+
+## Cost: why this stays free
+
+- Firebase **Spark** plan: Firestore (50k reads / 20k writes per day), Anonymous Auth, Hosting.
+- No Cloud Functions; all aggregation runs in the browser.
+- The dashboard uses **one** listener for all recent reports, not one per cafe, and re-anchors
+  the 15-minute window every 5 minutes so each read stays small.
+- QR codes and icons are generated locally.
+
+Nothing in this repo requires billing. If any future feature does, it goes to "Future work".
+
+## Testing
+
+```powershell
+npm test
+```
+These Node unit tests (built-in `node:test`) cover the haversine distance and geofence, status
+(mode, tie-break, confidence, staleness), dashboard sorting, and the Go/Risky/Skip boundaries.
 
 ## Future work
-- **Pre-ordering** with UPI payment integration (deliberately out of scope for this phase)
-- **WhatsApp Business API** notifications for universal device coverage, including iPhones
-- **Camera-based crowd counting** with computer vision (needs hardware and privacy approval)
-- Multi-campus deployment
-- Menu integration with real-time item availability
-- Feedback loop where students rate wait-time accuracy to improve predictions
 
----
+Not built in Phase 1. Look for `TODO(phase-2-…)` comments in the code.
+- **Push or reminder notifications** (FCM) before a chosen time.
+- **ML crowd and wait prediction** per cafe and time slot, replacing the placeholder
+  `STATUS_WAIT_MIN` map. It can be trained on the accumulated `reports` collection.
+- **Faster-item suggestions** and per-item prep times.
+- **Server-side report validation** (Cloud Function, Blaze plan). See the trust model above.
+- Using `acc` (GPS accuracy) to down-weight imprecise reports.
+- **Out of scope by design:** vendor pages, vendor login, and payments.
 
-## References
+## License
 
-1. Pusuluri, S. (2024). "Queue Management in College Canteens: A Participatory and Observational Approach to Understanding Waiting Experience and Process Delays." Case Study, VIT Vellore.
-2. Goncalves, J., Kukka, H., Sánchez, I., & Kostakos, V. (2016). "Crowdsourcing Queue Estimations in Situ." *Proceedings of CSCW '16*, ACM. DOI: 10.1145/2818048.2819997
-3. Maister, D. H. (1984). "The Psychology of Waiting Lines." Harvard Business School.
-4. Bulut, M., et al. "LineKing: Crowdsourced Line Wait-Time Estimation Using Smartphones." *MobiCase*.
-5. Norman, D. (2008). "The Psychology of Waiting Lines."
-
----
-
-## Team
-
-| Name | Role |
-|---|---|
-| [Your Name] | Developer, Researcher |
-| [Teammate 2] | [Role] |
-| [Teammate 3] | [Role] |
-
-**Institution:** RV College of Engineering, Bengaluru · **Course:** Design Thinking Lab (DTL), 2nd Year CSE · **Academic year:** 2026–27
-
----
-
-This project is developed for academic purposes.
+Academic-use placeholder. See [LICENSE](LICENSE).

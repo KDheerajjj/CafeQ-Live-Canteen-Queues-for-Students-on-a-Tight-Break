@@ -1,0 +1,35 @@
+{
+  "_comment": "PLACEHOLDER DATA. Names, coordinates, geofence radii and walk times below are NOT measured. Replace every value marked placeholder with values measured on campus (stand at the counter, read GPS lat/lng; time the walk from the reference point in config.js) and set \"placeholder\": false. Run `npm run seed` after editing.",
+  "cafes": [
+    {
+      "id": "cafe-a",
+      "name": "Cafe A (placeholder)",
+      "location_desc": "PLACEHOLDER — e.g. near the main gate",
+      "lat": 12.92300,
+      "lng": 77.49850,
+      "geofence_m": 90,
+      "walk_min": 4,
+      "placeholder": true
+    },
+    {
+      "id": "cafe-b",
+      "name": "Cafe B (placeholder)",
+      "location_desc": "PLACEHOLDER — e.g. behind the library",
+      "lat": 12.92420,
+      "lng": 77.49960,
+      "geofence_m": 90,
+      "walk_min": 3,
+      "placeholder": true
+    },
+    {
+      "id": "cafe-c",
+      "name": "Cafe C (placeholder)",
+      "location_desc": "PLACEHOLDER — e.g. next to the sports complex",
+      "lat": 12.92200,
+      "lng": 77.50080,
+      "geofence_m": 90,
+      "walk_min": 7,
+      "placeholder": true
+    }
+  ]
+}

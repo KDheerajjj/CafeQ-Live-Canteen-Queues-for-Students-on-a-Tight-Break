@@ -1,0 +1,50 @@
+rules_version = '2';
+
+// CafeQ Phase-1 security rules.
+//
+// What these rules DO guarantee (server-side):
+//   - nobody can edit/delete cafes from the client (they are seeded by script);
+//   - a report must come from a signed-in (anonymous) device, name that device's
+//     own uid, use a valid level, point at a cafe that exists, and carry the
+//     server's own timestamp (so clients can't back-date or future-date reports);
+//   - reports are append-only: no client updates or deletes.
+//
+// What they do NOT guarantee (enforced only in the browser in Phase 1):
+//   - the geofence (reporter is physically near the cafe), and
+//   - the 3-minute cooldown.
+// A determined user could bypass those. Phase-2 hardening = a Cloud Function,
+// which needs the Blaze (billing) plan. See README "Trust model".
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /cafes/{cafeId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /reports/{reportId} {
+      // Reports hold no personal data (level, cafe, random anonymous uid, time),
+      // so the dashboard can read them without signing in.
+      allow read: if true;
+
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll(['cafe_id', 'level', 'uid', 'created_at'])
+        && request.resource.data.keys().hasOnly(['cafe_id', 'level', 'uid', 'created_at', 'acc'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.level in ['green', 'yellow', 'red']
+        && request.resource.data.cafe_id is string
+        && exists(/databases/$(database)/documents/cafes/$(request.resource.data.cafe_id))
+        && request.resource.data.created_at == request.time
+        && (!('acc' in request.resource.data)
+            || (request.resource.data.acc is number && request.resource.data.acc >= 0));
+
+      allow update, delete: if false;
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

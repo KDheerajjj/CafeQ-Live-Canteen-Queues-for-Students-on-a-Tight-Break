@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CafeQ — live cafe crowds</title>
+  <meta name="description" content="Live crowd levels at RVCE campus cafes, reported by students nearby.">
+  <meta name="theme-color" content="#7a3e12">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <a class="logo" href="./">CafeQ</a>
+      <span id="live" class="live off">connecting…</span>
+    </header>
+    <p class="tagline">One short break? See which cafe you can eat at and still get back to class.</p>
+
+    <a class="btn" href="./worthit.html">⏱ Will I make it?</a>
+
+    <div id="placeholder-banner" class="warn-banner" hidden>
+      ⚠ Cafe locations and walk times are placeholders, not measured yet.
+    </div>
+
+    <section aria-live="polite">
+      <div id="loading" class="spinner" aria-label="Loading"></div>
+      <div id="empty" class="empty" hidden>
+        <strong>No recent reports.</strong>
+        <p>Near a cafe? Tap its QR to be first.</p>
+      </div>
+      <div id="notice"></div>
+      <ul id="cards" class="cards"></ul>
+    </section>
+
+    <p class="fineprint">
+      Crowd levels are tapped in by students standing at each cafe in the last 15 minutes.
+      Wait times are <strong>estimates</strong> from the crowd level, not measurements.
+      CafeQ collects no personal data.
+    </p>
+  </main>
+
+  <script type="module" src="./js/dashboard.js"></script>
+</body>
+</html>

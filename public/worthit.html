@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CafeQ — Will I make it?</title>
+  <meta name="theme-color" content="#7a3e12">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <a class="logo" href="./">CafeQ</a>
+      <a class="back" href="./">← All cafes</a>
+    </header>
+    <h1>Will I make it?</h1>
+    <p class="tagline">Tell us how long your break is. We'll check every cafe: walk + wait + eat.</p>
+
+    <form id="form" class="form" onsubmit="return false">
+      <label for="minutes">Minutes until you must be back</label>
+      <div class="minutes-row">
+        <input id="minutes" type="number" inputmode="numeric" min="1" max="180" placeholder="15" aria-describedby="minutes-hint">
+        <span>min</span>
+      </div>
+      <div class="chips" role="group" aria-label="Quick picks">
+        <button class="chip" type="button" data-min="10" aria-pressed="false">10</button>
+        <button class="chip" type="button" data-min="15" aria-pressed="false">15</button>
+        <button class="chip" type="button" data-min="20" aria-pressed="false">20</button>
+        <button class="chip" type="button" data-min="30" aria-pressed="false">30</button>
+      </div>
+      <p id="minutes-hint" class="hint">Includes ordering, waiting, and eating.</p>
+
+      <fieldset class="field" style="border:0;padding:0;margin-left:0">
+        <legend style="font-weight:600;padding:0">Starting from</legend>
+        <label class="radio"><input type="radio" name="start" value="ref" checked> <span id="ref-label">Reference point</span></label>
+        <label class="radio"><input type="radio" name="start" value="here"> My current location (estimated walk)</label>
+        <p id="loc-note" class="hint" hidden></p>
+      </fieldset>
+
+      <div class="field">
+        <label class="radio"><input id="walkback" type="checkbox"> Also count the walk back to class</label>
+      </div>
+    </form>
+
+    <section id="out" aria-live="polite">
+      <div id="loading" class="spinner" aria-label="Loading" hidden></div>
+      <div id="notice"></div>
+      <div id="verdict"></div>
+      <ul id="trips" class="cards"></ul>
+    </section>
+
+    <p id="assumptions" class="fineprint"></p>
+  </main>
+
+  <script type="module" src="./js/worthit.js"></script>
+</body>
+</html>
