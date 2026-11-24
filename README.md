@@ -1,5 +1,7 @@
 # CafeQ: Live Canteen Queues for Students on a Tight Break
 
+**Live dashboard: <https://cafeq-8f5a4.web.app>**
+
 CafeQ is a free, installable mobile web app (PWA) that shows **day scholars at RV College of
 Engineering** how crowded each campus cafe is right now, so they can choose where to eat in a
 short break and still get back to class on time.

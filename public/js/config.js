@@ -8,16 +8,18 @@
 // import it too.
 
 // ---------------------------------------------------------------------------
-// 1. Firebase web config — PLACEHOLDER. Replace with the values from
-//    Firebase console -> Project settings -> Your apps -> Web app -> Config.
+// 1. Firebase web config, from Firebase console -> Project settings ->
+//    Your apps -> Web app -> Config.
+//    measurementId (Google Analytics) is deliberately left out: CafeQ collects
+//    no analytics or personal data.
 // ---------------------------------------------------------------------------
 export const FIREBASE_CONFIG = {
-  apiKey: "REPLACE_ME",
-  authDomain: "REPLACE_ME.firebaseapp.com",
-  projectId: "REPLACE_ME",
-  storageBucket: "REPLACE_ME.appspot.com",
-  messagingSenderId: "REPLACE_ME",
-  appId: "REPLACE_ME",
+  apiKey: "AIzaSyDrtZBHsaYhz5WYTzX5zhVwJr4Ay-_R_2c",
+  authDomain: "cafeq-8f5a4.firebaseapp.com",
+  projectId: "cafeq-8f5a4",
+  storageBucket: "cafeq-8f5a4.firebasestorage.app",
+  messagingSenderId: "1015247017714",
+  appId: "1:1015247017714:web:29151fac36058d1f65a26b",
 };
 
 // True once the placeholder above has been replaced. The UI shows a setup
