@@ -11,7 +11,7 @@
 //
 // Bump CACHE_VERSION when you change the list below.
 
-const CACHE_VERSION = "cafeq-v2";
+const CACHE_VERSION = "cafeq-v3";
 const SHELL = [
   "./",
   "./index.html",
@@ -24,6 +24,7 @@ const SHELL = [
   "./js/ui.js",
   "./js/status-engine.js",
   "./js/geo.js",
+  "./js/location.js",
   "./js/dashboard.js",
   "./js/report.js",
   "./js/worthit.js",

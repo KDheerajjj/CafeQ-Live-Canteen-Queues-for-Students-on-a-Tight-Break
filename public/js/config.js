@@ -69,12 +69,18 @@ export const CONFIDENCE_MIN_REPORTS = 2;
 // One report per device per this many minutes (client-side, see README).
 export const COOLDOWN_MIN = 3;
 
-// Walking estimate used only when the student picks "my current location" in
-// the worth-it checker (cafes.walk_min is used for the reference point).
+// Walking estimate used when the student turns on "Use my location for walk
+// times" (otherwise cafes.walk_min, from the reference point, is used).
 // ~75 m/min is a normal walking pace; the detour factor turns straight-line
 // distance into a rough path distance. Both are estimates.
 export const WALK_SPEED_M_PER_MIN = 75;
 export const WALK_DETOUR_FACTOR = 1.3;
+
+// Location-based walk times: ignore fixes worse than this (m) and fall back to
+// walk_min; re-read the position this often while the app is open and visible,
+// and every time it is opened / brought back to the foreground.
+export const MAX_LOCATION_ACCURACY_M = 150;
+export const LOCATION_REFRESH_MIN = 3;
 
 // Human labels for each level. Keep in sync with firestore.rules.
 export const LEVELS = {

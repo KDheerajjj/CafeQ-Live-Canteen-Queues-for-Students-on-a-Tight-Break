@@ -23,6 +23,7 @@ needs no login and no app install. **Vendors don't need to do anything.**
 - [Deploy](#deploy)
 - [Data model](#data-model)
 - [Status engine](#status-engine)
+- [Walk times from your location](#walk-times-from-your-location)
 - ["Will I make it?" maths](#will-i-make-it-maths)
 - [Trust model and its limits (read this)](#trust-model-and-its-limits-read-this)
 - [Cost: why this stays free](#cost-why-this-stays-free)
@@ -61,6 +62,7 @@ public/                    static site: deploys unchanged to Firebase Hosting or
   js/firebase-init.js      init app, anonymous auth, service-worker registration
   js/status-engine.js      PURE: reports → status/confidence; sort; trip verdicts
   js/geo.js                PURE: haversine distance, geofence, walk estimate
+  js/location.js           opt-in "use my location" tracker for personal walk times
   js/data.js               shared realtime Firestore listeners (dashboard + worth-it)
   js/ui.js                 small shared DOM helpers (escaping, labels, notices)
   js/dashboard.js, report.js, worthit.js   page controllers
@@ -97,9 +99,11 @@ You need **Node 22.9 or newer** and a Google account. **Do not enable billing an
    npx firebase-tools use --add   # pick your project (writes .firebaserc, which is git-ignored)
    ```
 6. **Measure your cafes.** Edit `seed/cafes.json`: stand at each counter and read the GPS lat/lng
-   (Google Maps → long-press), time the walk from the reference point, set `geofence_m`
-   (90 m is a sensible start), and set `"placeholder": false`. Update `REFERENCE_POINT` in
-   `config.js` the same way.
+   (Google Maps → long-press), time the walk from the reference point, set `geofence_m`,
+   and set `"placeholder": false`. Update `REFERENCE_POINT` in `config.js` the same way.
+   *Geofence:* the RVCE cafes use **40 m**. That's small enough that the M M Foods and
+   Cafe Mingos zones (84 m apart) don't overlap. If genuine reports get rejected at a counter
+   (indoor GPS is often off by 20–50 m), raise that one cafe to 50–60 m.
 7. **Seed the cafes.** `cafes` is read-only to clients, so seeding uses the Admin SDK. Pick one
    of these credential options; **none of them puts a key in the repo**:
    - `gcloud auth application-default login` (no key file), **or**
@@ -188,6 +192,30 @@ No location coordinates, names, emails or device details are stored.
 Dashboard order: cafes you can use soonest come first, sorted by walk plus estimated wait. Packed
 (red) cafes come next, and unknown cafes go last.
 
+## Walk times from your location
+
+By default, walk times are each cafe's `walk_min`, measured from the day-scholar reference
+point. A student who taps **📍 Use my location for walk times** on the dashboard, or picks
+*My current location* on "Will I make it?" (they share one setting), gets personal estimates
+instead:
+
+```
+walk ≈ straight-line distance × 1.3 (detour) ÷ 75 m/min      (minimum 1 min)
+```
+
+- **Opt-in, remembered on this device.** A first-time visitor never sees a location prompt just
+  for opening the app.
+- **Refreshed** when the app opens, whenever it comes back to the foreground, and every
+  3 minutes while it stays open (`LOCATION_REFRESH_MIN`).
+- **Falls back** to `walk_min` if permission is denied, there's no fix, or the fix is worse
+  than ±150 m (`MAX_LOCATION_ACCURACY_M`). Cards say which is in use: "~4 min walk from you
+  (est.)" or "4 min walk".
+- **Private.** The position is used in the browser only. It is never written to Firestore or
+  saved on the device.
+- **No background updates.** Browsers don't let a closed web app read location. Timed updates
+  "10 minutes before class ends" need push notifications; see
+  [docs/push-notifications.md](docs/push-notifications.md).
+
 ## "Will I make it?" maths
 
 ```
@@ -203,8 +231,8 @@ Skip  : total > available
   verdict errs toward getting you back on time.
 - The spec's formula counts the walk **once**. Tick *Also count the walk back to class* to count
   both directions.
-- *My current location* replaces `walk_min` with an estimate: straight-line distance × 1.3
-  detour factor ÷ 75 m/min.
+- *My current location* replaces `walk_min` with an estimate from where you are (see
+  [Walk times from your location](#walk-times-from-your-location)).
 
 ## Trust model and its limits (read this)
 
@@ -249,7 +277,9 @@ These Node unit tests (built-in `node:test`) cover the haversine distance and ge
 ## Future work
 
 Not built in Phase 1. Look for `TODO(phase-2-…)` comments in the code.
-- **Push or reminder notifications** (FCM) before a chosen time.
+- **Push or reminder notifications** (FCM) before a chosen time, e.g. "10 minutes before class
+  ends: Mingos Canteen has no wait". Requirements, design and the free-hosting options are in
+  [docs/push-notifications.md](docs/push-notifications.md).
 - **ML crowd and wait prediction** per cafe and time slot, replacing the placeholder
   `STATUS_WAIT_MIN` map. It can be trained on the accumulated `reports` collection.
 - **Faster-item suggestions** and per-item prep times.

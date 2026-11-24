@@ -37,3 +37,28 @@ export function isWithinGeofence(distanceM, geofenceM) {
 export function estimateWalkMinutes(distanceM, speedMPerMin, detourFactor) {
   return Math.max(1, Math.round((distanceM * detourFactor) / speedMPerMin));
 }
+
+/**
+ * Walk minutes to a cafe for THIS student.
+ * - If we have a usable position fix (accuracy within maxAccuracyM), estimate
+ *   from the student's own location -> { min, source: "you" }.
+ * - Otherwise fall back to the cafe's stored walk_min, measured from the
+ *   day-scholar reference point -> { min, source: "reference" }.
+ * The student's position is only ever used here, in the browser; it is never stored.
+ *
+ * @param {{lat:number, lng:number, walk_min:number}} cafe
+ * @param {{lat:number, lng:number, accuracy?:number}|null} userPos
+ * @param {{speedMPerMin:number, detourFactor:number, maxAccuracyM:number}} opts
+ */
+export function resolveWalkMinutes(cafe, userPos, { speedMPerMin, detourFactor, maxAccuracyM }) {
+  const usable =
+    userPos &&
+    Number.isFinite(userPos.lat) &&
+    Number.isFinite(userPos.lng) &&
+    Number.isFinite(cafe.lat) &&
+    Number.isFinite(cafe.lng) &&
+    (userPos.accuracy == null || userPos.accuracy <= maxAccuracyM);
+  if (!usable) return { min: cafe.walk_min, source: "reference" };
+  const meters = haversineMeters(userPos.lat, userPos.lng, cafe.lat, cafe.lng);
+  return { min: estimateWalkMinutes(meters, speedMPerMin, detourFactor), source: "you" };
+}

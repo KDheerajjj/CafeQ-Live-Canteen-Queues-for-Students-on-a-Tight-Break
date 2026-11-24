@@ -111,15 +111,18 @@ export function groupByCafe(reports) {
  * Dashboard ordering: "soonest usable first".
  * Known, non-red cafes come first, ordered by walk + estimated wait (ascending);
  * then red (packed) cafes; unknown cafes last. Ties break by name.
- * @param {Array<{cafe, status}>} rows
+ * Each row may carry `walkMin` (e.g. from the student's own location); if it
+ * doesn't, the cafe's reference-point walk_min is used.
+ * @param {Array<{cafe, status, walkMin?}>} rows
  */
 export function sortForDashboard(rows) {
   const bucket = (s) => (s.status === "unknown" ? 2 : s.status === "red" ? 1 : 0);
+  const walk = (row) => row.walkMin ?? row.cafe.walk_min ?? 0;
   return [...rows].sort((a, b) => {
     const d = bucket(a.status) - bucket(b.status);
     if (d !== 0) return d;
-    const ta = (a.cafe.walk_min ?? 0) + (a.status.waitMin ?? 0);
-    const tb = (b.cafe.walk_min ?? 0) + (b.status.waitMin ?? 0);
+    const ta = walk(a) + (a.status.waitMin ?? 0);
+    const tb = walk(b) + (b.status.waitMin ?? 0);
     if (ta !== tb) return ta - tb;
     return String(a.cafe.name).localeCompare(String(b.cafe.name));
   });

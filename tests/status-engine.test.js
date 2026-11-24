@@ -96,3 +96,10 @@ test("worth-it ranking: best Go first; no Go -> grab-and-go suggestion", () => {
   assert.equal(b.best, null);
   assert.equal(b.grabAndGo.id, "y");
 });
+
+test("dashboard sort uses the student's own walkMin when present", () => {
+  const row = (name, walk_min, walkMin) => ({ cafe: { name, walk_min }, status: { status: "green", waitMin: 2 }, walkMin });
+  // By reference walk_min A (2) beats B (5); from the student's spot B (1) beats A (8).
+  const sorted = sortForDashboard([row("A", 2, 8), row("B", 5, 1)]);
+  assert.deepEqual(sorted.map((x) => x.cafe.name), ["B", "A"]);
+});

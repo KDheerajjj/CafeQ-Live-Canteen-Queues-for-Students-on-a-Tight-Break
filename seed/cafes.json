@@ -7,7 +7,7 @@
       "location_desc": "RVCE campus",
       "lat": 12.923484,
       "lng": 77.499839,
-      "geofence_m": 90,
+      "geofence_m": 40,
       "walk_min": 4,
       "placeholder": true
     },
@@ -17,7 +17,7 @@
       "location_desc": "RVCE campus",
       "lat": 12.922774,
       "lng": 77.500711,
-      "geofence_m": 90,
+      "geofence_m": 40,
       "walk_min": 3,
       "placeholder": true
     },
@@ -27,7 +27,7 @@
       "location_desc": "RVCE campus",
       "lat": 12.923745,
       "lng": 77.500567,
-      "geofence_m": 90,
+      "geofence_m": 40,
       "walk_min": 7,
       "placeholder": true
     },
@@ -37,7 +37,7 @@
       "location_desc": "Near the library",
       "lat": 12.9227738,
       "lng": 77.5007112,
-      "geofence_m": 90,
+      "geofence_m": 40,
       "walk_min": 3,
       "placeholder": true
     }

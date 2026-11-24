@@ -11,7 +11,8 @@
 import { registerServiceWorker } from "./firebase-init.js";
 import { watchLiveStatuses } from "./data.js";
 import { evaluateTrip, rankTrips } from "./status-engine.js";
-import { haversineMeters, estimateWalkMinutes } from "./geo.js";
+import { resolveWalkMinutes } from "./geo.js";
+import { createLocationTracker, usablePosition } from "./location.js";
 import {
   REFERENCE_POINT,
   EATING_BUFFER_MIN,
@@ -19,16 +20,18 @@ import {
   STATUS_WAIT_MIN,
   WALK_SPEED_M_PER_MIN,
   WALK_DETOUR_FACTOR,
+  MAX_LOCATION_ACCURACY_M,
 } from "./config.js";
 import { esc, levelLabel, showNotice, describeError } from "./ui.js";
 
 registerServiceWorker();
 
 const $ = (id) => document.getElementById(id);
+const WALK_OPTS = { speedMPerMin: WALK_SPEED_M_PER_MIN, detourFactor: WALK_DETOUR_FACTOR, maxAccuracyM: MAX_LOCATION_ACCURACY_M };
 const state = {
   rows: null,      // [{cafe, status}] from the live listener
   available: null, // minutes
-  here: null,      // {lat, lng} if "my current location" chosen
+  loc: null,       // location tracker state (shared opt-in with the dashboard)
 };
 
 $("ref-label").textContent = REFERENCE_POINT.label;
@@ -56,56 +59,42 @@ chips.forEach((chip) =>
 );
 $("walkback").addEventListener("change", render);
 
-for (const radio of document.querySelectorAll('input[name="start"]')) {
-  radio.addEventListener("change", () => (radio.value === "here" ? useMyLocation() : useReference()));
-}
-
-function useReference() {
-  state.here = null;
-  $("loc-note").hidden = true;
+// "Starting from" uses the same remembered opt-in as the dashboard's location
+// toggle, and the position refreshes on open / return to foreground.
+function renderLocation(loc) {
+  state.loc = loc;
+  const here = loc.status !== "off" && loc.status !== "denied";
+  document.querySelector(`input[name="start"][value="${here ? "here" : "ref"}"]`).checked = true;
+  const note = $("loc-note");
+  const acc = loc.pos ? Math.round(loc.pos.accuracy) : null;
+  note.hidden = loc.status === "off";
+  note.textContent = {
+    off: "",
+    locating: "Getting your location…",
+    on: `Walk times estimated from your location (±${acc} m): straight-line × ${WALK_DETOUR_FACTOR} at ${WALK_SPEED_M_PER_MIN} m/min.`,
+    inaccurate: `GPS too rough (±${acc} m) — using reference-point walk times.`,
+    denied: "Location is blocked for this site — using the reference point.",
+    unavailable: "Couldn't get your location yet — using reference-point walk times.",
+  }[loc.status];
   render();
 }
+const tracker = createLocationTracker(renderLocation);
 
-function useMyLocation() {
-  const note = $("loc-note");
-  note.hidden = false;
-  note.textContent = "Getting your location…";
-  if (!("geolocation" in navigator)) {
-    note.textContent = "Location isn't available in this browser — using the reference point.";
-    document.querySelector('input[value="ref"]').checked = true;
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      state.here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      note.textContent = `Walk times estimated from your location (±${Math.round(pos.coords.accuracy)} m), straight-line × ${WALK_DETOUR_FACTOR} at ${WALK_SPEED_M_PER_MIN} m/min.`;
-      render();
-    },
-    () => {
-      note.textContent = "Couldn't get your location — using the reference point.";
-      document.querySelector('input[value="ref"]').checked = true;
-      state.here = null;
-      render();
-    },
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
-  );
+for (const radio of document.querySelectorAll('input[name="start"]')) {
+  radio.addEventListener("change", () => (radio.value === "here" ? tracker.enable() : tracker.disable()));
 }
 
-/** Walk minutes to a cafe from the chosen start point. */
-function walkMinutesTo(cafe) {
-  if (!state.here) return cafe.walk_min; // measured (placeholder) value from the reference point
-  return estimateWalkMinutes(
-    haversineMeters(state.here.lat, state.here.lng, cafe.lat, cafe.lng),
-    WALK_SPEED_M_PER_MIN,
-    WALK_DETOUR_FACTOR
-  );
+/** Walk time to a cafe from the chosen start point: { min, source }. */
+function walkTo(cafe) {
+  return resolveWalkMinutes(cafe, state.loc ? usablePosition(state.loc) : null, WALK_OPTS);
 }
 
 // ---------- render ----------
 const VERDICT_TEXT = { go: "Go", risky: "Risky", skip: "Skip" };
 
-function tripHtml({ cafe, status, result }) {
-  const walkLabel = $("walkback").checked ? "walk there + back" : "walk";
+function tripHtml({ cafe, status, result, walkSource }) {
+  const walkLabel =
+    ($("walkback").checked ? "walk there + back" : "walk") + (walkSource === "you" ? " (from you, est.)" : "");
   const waitLabel = result.assumedWorstCase ? "wait (no report — assumed packed)" : `wait (est., ${levelLabel(status.status).toLowerCase()})`;
   return `
     <li class="card trip">
@@ -144,16 +133,20 @@ function render() {
   }
   $("notice").innerHTML = "";
 
-  const trips = state.rows.map(({ cafe, status }) => ({
-    cafe,
-    status,
-    result: evaluateTrip({
-      availableMin: state.available,
-      walkMin: walkMinutesTo(cafe),
-      status: status.status,
-      opts: { walkBack: $("walkback").checked },
-    }),
-  }));
+  const trips = state.rows.map(({ cafe, status }) => {
+    const walk = walkTo(cafe);
+    return {
+      cafe,
+      status,
+      walkSource: walk.source,
+      result: evaluateTrip({
+        availableMin: state.available,
+        walkMin: walk.min,
+        status: status.status,
+        opts: { walkBack: $("walkback").checked },
+      }),
+    };
+  });
   const { ranked, best, grabAndGo } = rankTrips(trips);
   $("verdict").innerHTML = verdictHtml({ best, grabAndGo });
   $("trips").innerHTML = ranked.map(tripHtml).join("");
