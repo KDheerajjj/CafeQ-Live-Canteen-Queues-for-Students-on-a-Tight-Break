@@ -9,9 +9,11 @@
 //    straight to the network ("network-first for Firestore"). The Firestore SDK
 //    has its own offline cache for data.
 //
-// Bump CACHE_VERSION when you change the list below.
+// Bump CACHE_VERSION on EVERY deploy that changes the UI, icons or this list.
+// The activate handler deletes every cache whose name differs, so installed
+// apps drop the old icon/UI instead of serving stale copies.
 
-const CACHE_VERSION = "cafeq-v3";
+const CACHE_VERSION = "cafeq-cache-v5";
 const SHELL = [
   "./",
   "./index.html",
@@ -31,6 +33,9 @@ const SHELL = [
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
+  "./icons/icon-maskable-512.png",
+  "./icons/apple-touch-icon.png",
+  "./icons/favicon-32.png",
 ];
 
 self.addEventListener("install", (event) => {

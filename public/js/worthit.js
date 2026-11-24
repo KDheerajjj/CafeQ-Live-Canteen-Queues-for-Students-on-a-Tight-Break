@@ -21,8 +21,9 @@ import {
   WALK_SPEED_M_PER_MIN,
   WALK_DETOUR_FACTOR,
   MAX_LOCATION_ACCURACY_M,
+  PREP_BUFFER_MIN,
 } from "./config.js";
-import { esc, levelLabel, showNotice, describeError } from "./ui.js";
+import { esc, levelLabel, queueText, showNotice, describeError } from "./ui.js";
 
 registerServiceWorker();
 
@@ -37,7 +38,9 @@ const state = {
 $("ref-label").textContent = REFERENCE_POINT.label;
 $("assumptions").innerHTML =
   `Assumptions: eating takes ${EATING_BUFFER_MIN} min; "Go" needs ${SAFETY_MARGIN_MIN} min spare. ` +
-  `Waits are <strong>estimates</strong> from the crowd level (No wait ≈ ${STATUS_WAIT_MIN.green}, Short line ≈ ${STATUS_WAIT_MIN.yellow}, Packed ≈ ${STATUS_WAIT_MIN.red} min), not measurements. ` +
+  `Waits are <strong>estimates</strong>: the median reported queue × that counter's assumed serving time per person ` +
+  `(canteen ≈ 60 s, cafes ≈ 45 s — assumptions still to be calibrated) + ${PREP_BUFFER_MIN} min to hand over your order. ` +
+  `Cafes with only older colour reports use a rough fallback (≈ ${STATUS_WAIT_MIN.green} / ${STATUS_WAIT_MIN.yellow} / ${STATUS_WAIT_MIN.red} min). ` +
   `If a cafe has no recent report we assume it's packed. Walk times from the reference point are placeholders until measured.`;
 
 // ---------- inputs ----------
@@ -95,7 +98,11 @@ const VERDICT_TEXT = { go: "Go", risky: "Risky", skip: "Skip" };
 function tripHtml({ cafe, status, result, walkSource }) {
   const walkLabel =
     ($("walkback").checked ? "walk there + back" : "walk") + (walkSource === "you" ? " (from you, est.)" : "");
-  const waitLabel = result.assumedWorstCase ? "wait (no report — assumed packed)" : `wait (est., ${levelLabel(status.status).toLowerCase()})`;
+  const waitLabel = result.assumedWorstCase
+    ? "wait (no report — assumed packed)"
+    : status.queueCount != null
+      ? `wait (est., ${queueText(status.queueCount)})`
+      : `wait (est., ${levelLabel(status.status).toLowerCase()})`;
   return `
     <li class="card trip">
       <div class="card-head">
@@ -143,6 +150,7 @@ function render() {
         availableMin: state.available,
         walkMin: walk.min,
         status: status.status,
+        waitMin: status.waitMin, // count-based when queue reports exist, else colour fallback
         opts: { walkBack: $("walkback").checked },
       }),
     };

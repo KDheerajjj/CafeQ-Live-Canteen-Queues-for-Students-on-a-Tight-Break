@@ -21,6 +21,11 @@ export function waitText(waitMin) {
   return waitMin == null ? "Wait unknown" : `~${waitMin} min wait (est.)`;
 }
 
+/** "~4 in line" from a (possibly fractional) median queue count. */
+export function queueText(count) {
+  return count == null ? "" : `~${Math.round(count)} in line`;
+}
+
 /** Show a friendly notice in place of the page content (setup / errors). */
 export function showNotice(container, title, body) {
   container.innerHTML = `<div class="notice" role="status"><strong>${esc(title)}</strong><p>${esc(body)}</p></div>`;

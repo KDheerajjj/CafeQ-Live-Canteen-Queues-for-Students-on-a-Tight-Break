@@ -14,9 +14,12 @@
     "deploy:rules": "npx --yes firebase-tools deploy --only firestore",
     "deploy:hosting": "npx --yes firebase-tools deploy --only hosting"
   },
-  "engines": { "node": ">=22.9" },
+  "engines": {
+    "node": ">=22.9"
+  },
   "devDependencies": {
     "firebase-admin": "^12.7.0",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "sharp": "^0.33.5"
   }
 }

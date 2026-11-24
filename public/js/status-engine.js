@@ -13,6 +13,11 @@ import {
   STATUS_WAIT_MIN,
   EATING_BUFFER_MIN,
   SAFETY_MARGIN_MIN,
+  LEVEL_THRESHOLDS,
+  OUTLIER_COUNT_CAP,
+  PREP_BUFFER_MIN,
+  DEFAULT_SERVICE_SEC_PER_PERSON,
+  QUEUE_COUNT_MAX,
 } from "./config.js";
 
 const MIN_MS = 60 * 1000;
@@ -27,75 +32,148 @@ export function toMillis(t) {
   return NaN;
 }
 
+// ---------------------------------------------------------------------------
+// Queue counts
+// ---------------------------------------------------------------------------
+
+/** Is this a valid stored queue count (integer 0..QUEUE_COUNT_MAX)? */
+export function isValidCount(n) {
+  return Number.isInteger(n) && n >= 0 && n <= QUEUE_COUNT_MAX;
+}
+
+/**
+ * Colour for a queue length. Same thresholds as firestore.rules:
+ *   count <= 2 -> green,  3..6 -> yellow,  >= 7 -> red   (by default).
+ * Works for fractional medians too (e.g. 2.5 -> yellow).
+ */
+export function levelForCount(count, t = LEVEL_THRESHOLDS) {
+  if (count <= t.greenMax) return "green";
+  if (count <= t.yellowMax) return "yellow";
+  return "red";
+}
+
+/** Median of a non-empty list of numbers (average of the middle two if even). */
+export function median(nums) {
+  const s = [...nums].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
+/**
+ * Count-based wait estimate (an ESTIMATE built on a per-cafe service-rate ASSUMPTION):
+ *   round(queueCount × secondsPerPerson / 60) + prep buffer
+ */
+export function waitFromCount(queueCount, secPerPerson, prepBufferMin = PREP_BUFFER_MIN) {
+  return Math.round((queueCount * secPerPerson) / 60) + prepBufferMin;
+}
+
+// ---------------------------------------------------------------------------
+// Per-cafe status
+// ---------------------------------------------------------------------------
+
 /**
  * Compute one cafe's status from its reports.
  *
- * Rules (from the Phase-1 spec):
- *  1. Keep only valid reports from the last STATUS_WINDOW_MIN (15) minutes, newest first.
- *  2. 0 reports in the window -> "unknown", no confidence. (This also covers
- *     "newest report older than 15 min -> force unknown".)
- *  3. Otherwise status = the MODE (most common level) in the window.
- *     Tie-break: the tied level that was reported most recently wins, because
- *     a crowd changes over time and the latest observation is the best tiebreaker.
- *  4. Confidence = "high" if >= 2 reports within the last 10 minutes agree with
- *     the mode; otherwise "low".
- *  5. "updated N min ago" comes from the newest report.
+ *  1. Keep reports from the last STATUS_WINDOW_MIN (15) minutes, newest first.
+ *     Drop outliers: any single queue_count > OUTLIER_COUNT_CAP (50) is ignored here.
+ *  2. Nothing left -> "unknown", no confidence. (Covers "newest report older
+ *     than 15 min -> force unknown".)
+ *  3. If any report carries a queue_count (v2):
+ *       queueCount = MEDIAN of the counts  (robust: one silly entry can't move it)
+ *       status     = levelForCount(median)
+ *       waitMin    = round(median × cafe's service_sec_per_person / 60) + prep buffer
+ *     Otherwise (only old colour-only reports):
+ *       status     = MODE of the colours (tie -> most recently reported colour)
+ *       waitMin    = STATUS_WAIT_MIN fallback map
+ *  4. Confidence = "high" if >= 2 reports in the last 10 minutes have the same
+ *     colour as the status (a count report's colour is derived from its count),
+ *     otherwise "low".
+ *  5. "updated N min ago" comes from the newest kept report.
  *
- * @param {Array<{level: string, created_at: any}>} reports  any order
+ * @param {Array<{level?: string, queue_count?: number, created_at: any}>} reports  any order
  * @param {number} nowMs  current time (injected so tests are deterministic)
- * @returns {{status, confidence, waitMin, updatedMinAgo, reportCount, counts}}
+ * @param {object} [opts] { serviceSecPerPerson, windowMin, ... } — mainly for tests
  */
 export function computeStatus(reports, nowMs, opts = {}) {
   const windowMin = opts.windowMin ?? STATUS_WINDOW_MIN;
   const confWindowMin = opts.confidenceWindowMin ?? CONFIDENCE_WINDOW_MIN;
   const confMin = opts.confidenceMinReports ?? CONFIDENCE_MIN_REPORTS;
   const waitMap = opts.waitMap ?? STATUS_WAIT_MIN;
+  const secPerPerson = opts.serviceSecPerPerson ?? DEFAULT_SERVICE_SEC_PER_PERSON;
+  const outlierCap = opts.outlierCap ?? OUTLIER_COUNT_CAP;
 
   const windowStart = nowMs - windowMin * MIN_MS;
-  const recent = (reports || [])
-    .map((r) => ({ level: r.level, t: toMillis(r.created_at) }))
-    .filter((r) => VALID_LEVELS.includes(r.level) && Number.isFinite(r.t))
-    // Reports slightly "in the future" (client/server clock skew) count as now.
-    .filter((r) => r.t >= windowStart)
-    .sort((a, b) => b.t - a.t); // newest first
+  let ignored = 0;
+  const recent = [];
+  for (const r of reports || []) {
+    const t = toMillis(r.created_at);
+    if (!Number.isFinite(t) || t < windowStart) continue;
+    const count = isValidCount(r.queue_count) ? r.queue_count : null;
+    if (count !== null && count > outlierCap) {
+      ignored += 1; // stored in Firestore, but not trusted for aggregation
+      continue;
+    }
+    // A count report's colour is re-derived from its count; old reports keep their colour.
+    const level = count !== null ? levelForCount(count) : r.level;
+    if (!VALID_LEVELS.includes(level)) continue;
+    recent.push({ t, level, count });
+  }
+  recent.sort((a, b) => b.t - a.t); // newest first
 
   const counts = { green: 0, yellow: 0, red: 0 };
   if (recent.length === 0) {
-    return { status: "unknown", confidence: null, waitMin: waitMap.unknown ?? null, updatedMinAgo: null, reportCount: 0, counts };
+    return {
+      status: "unknown", confidence: null, waitMin: waitMap.unknown ?? null, waitSource: null,
+      queueCount: null, updatedMinAgo: null, reportCount: 0, ignoredCount: ignored, counts,
+    };
   }
 
-  // Tally levels, remembering when each level was last seen (for tie-breaks).
   const lastSeen = {};
   for (const r of recent) {
     counts[r.level] += 1;
     if (lastSeen[r.level] === undefined) lastSeen[r.level] = r.t; // first hit = newest
   }
 
-  // Mode with recency tie-break.
-  let status = null;
-  for (const level of VALID_LEVELS) {
-    if (counts[level] === 0) continue;
-    if (
-      status === null ||
-      counts[level] > counts[status] ||
-      (counts[level] === counts[status] && lastSeen[level] > lastSeen[status])
-    ) {
-      status = level;
+  const countValues = recent.filter((r) => r.count !== null).map((r) => r.count);
+  let status, waitMin, waitSource, queueCount;
+
+  if (countValues.length > 0) {
+    // v2 path: median queue length drives everything.
+    queueCount = median(countValues);
+    status = levelForCount(queueCount);
+    waitMin = waitFromCount(queueCount, secPerPerson, opts.prepBufferMin ?? PREP_BUFFER_MIN);
+    waitSource = "count";
+  } else {
+    // Backward-compatible path: colour-only reports. Mode with recency tie-break.
+    status = null;
+    for (const level of VALID_LEVELS) {
+      if (counts[level] === 0) continue;
+      if (
+        status === null ||
+        counts[level] > counts[status] ||
+        (counts[level] === counts[status] && lastSeen[level] > lastSeen[status])
+      ) {
+        status = level;
+      }
     }
+    queueCount = null;
+    waitMin = waitMap[status] ?? null;
+    waitSource = "colour";
   }
 
   const confStart = nowMs - confWindowMin * MIN_MS;
   const agreeing = recent.filter((r) => r.t >= confStart && r.level === status).length;
   const confidence = agreeing >= confMin ? "high" : "low";
 
-  const updatedMinAgo = Math.max(0, Math.floor((nowMs - recent[0].t) / MIN_MS));
-
   return {
     status,
     confidence,
-    waitMin: waitMap[status] ?? null, // ESTIMATE from the placeholder map
-    updatedMinAgo,
+    waitMin,      // ESTIMATE (count × service-rate assumption, or the colour fallback map)
+    waitSource,   // "count" | "colour"
+    queueCount,   // median count, or null when only colour reports exist
+    updatedMinAgo: Math.max(0, Math.floor((nowMs - recent[0].t) / MIN_MS)),
     reportCount: recent.length,
+    ignoredCount: ignored,
     counts,
   };
 }
@@ -135,30 +213,34 @@ export function sortForDashboard(rows) {
  *   Risky : available - margin < total <= available
  *   Skip  : total > available
  *
+ * `waitMin` is the cafe's current estimate from computeStatus (count-based when
+ * available). If it's missing — status unknown — we assume the WORST known case
+ * (the "red" fallback wait) and flag it, so the verdict errs on the side of
+ * getting the student back on time.
+ *
  * Note on round trips: the spec's formula counts the walk ONCE (to the cafe).
  * Pass `walkBack: true` to also count the walk back to class.
- *
- * When the cafe's status is unknown there is no wait estimate. Rather than
- * guess optimistically, we assume the WORST known case (red) and flag it, so
- * the verdict errs on the side of getting the student back on time.
  */
-export function evaluateTrip({ availableMin, walkMin, status, opts = {} }) {
+export function evaluateTrip({ availableMin, walkMin, status, waitMin, opts = {} }) {
   const waitMap = opts.waitMap ?? STATUS_WAIT_MIN;
   const eatMin = opts.eatingBufferMin ?? EATING_BUFFER_MIN;
   const margin = opts.safetyMarginMin ?? SAFETY_MARGIN_MIN;
   const walkLegs = opts.walkBack ? 2 : 1;
 
-  const assumedWorstCase = status === "unknown" || waitMap[status] == null;
-  const waitMin = assumedWorstCase ? waitMap.red : waitMap[status];
+  // Prefer the explicit estimate; fall back to the colour map; unknown -> worst case.
+  const known = status !== "unknown";
+  const estimate = waitMin ?? (known ? waitMap[status] : null);
+  const assumedWorstCase = estimate == null;
+  const wait = assumedWorstCase ? waitMap.red : estimate;
   const walkTotal = walkMin * walkLegs;
-  const totalMin = walkTotal + waitMin + eatMin;
+  const totalMin = walkTotal + wait + eatMin;
 
   let verdict;
   if (totalMin <= availableMin - margin) verdict = "go";
   else if (totalMin <= availableMin) verdict = "risky";
   else verdict = "skip";
 
-  return { verdict, totalMin, walkMin: walkTotal, waitMin, eatMin, assumedWorstCase, slackMin: availableMin - totalMin };
+  return { verdict, totalMin, walkMin: walkTotal, waitMin: wait, eatMin, assumedWorstCase, slackMin: availableMin - totalMin };
 }
 
 /**

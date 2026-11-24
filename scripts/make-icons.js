@@ -1,68 +1,77 @@
-// make-icons.js — generate PLACEHOLDER PWA icons with no dependencies.
-// Draws a coffee cup seen from above (brown tile, cream rim, dark coffee) as PNGs.
-// Replace public/icons/*.png with designed icons whenever you like.
+// make-icons.js — build the whole PWA icon set from assets/icon-source.png.
 //
-// Usage: npm run icons
+// The source is the CafeQ tile (orange, rounded) on a dark-brown margin. Outputs
+// in public/icons/:
+//   icon-192.png, icon-512.png      "any" icons: the full artwork, squared up
+//   icon-maskable-512.png           extra dark-brown margin so the tile content sits
+//                                   inside Android's 80 % safe-zone circle
+//   apple-touch-icon.png (180)      cropped to the orange tile; iOS rounds the corners itself
+//   favicon-32.png                  cropped to the tile so it reads at tiny sizes
+//
+// Usage: npm run icons   (re-run whenever assets/icon-source.png changes, then bump
+//        CACHE_VERSION in public/service-worker.js so installed apps pick it up)
 
-import { writeFileSync, mkdirSync } from "node:fs";
-import { deflateSync } from "node:zlib";
+import sharp from "sharp";
+import { mkdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
-const BROWN = [122, 62, 18];
-const CREAM = [246, 236, 220];
-const COFFEE = [74, 38, 14];
+const SRC = fileURLToPath(new URL("../assets/icon-source.png", import.meta.url));
+const OUT = fileURLToPath(new URL("../public/icons/", import.meta.url));
+mkdirSync(OUT, { recursive: true });
 
-// CRC32 for PNG chunks.
-const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
-  let c = n;
-  for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-  return c >>> 0;
-});
-const crc32 = (buf) => {
-  let c = 0xffffffff;
-  for (const b of buf) c = CRC_TABLE[(c ^ b) & 0xff] ^ (c >>> 8);
-  return (c ^ 0xffffffff) >>> 0;
-};
-const chunk = (type, data) => {
-  const len = Buffer.alloc(4);
-  len.writeUInt32BE(data.length);
-  const td = Buffer.concat([Buffer.from(type), data]);
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(td));
-  return Buffer.concat([len, td, crc]);
-};
+// Brand colours (sampled from the artwork). Keep in sync with manifest.webmanifest.
+const DARK_BROWN = { r: 58, g: 30, b: 18, alpha: 1 }; // #3A1E12 margin / splash background
 
-/** @param scale fraction of the tile the cup occupies (smaller for maskable safe zone) */
-function icon(size, scale) {
-  const raw = Buffer.alloc((size * 3 + 1) * size);
-  const c = size / 2;
-  const rim = (size / 2) * scale;
-  const coffee = rim * 0.72;
-  for (let y = 0; y < size; y++) {
-    raw[y * (size * 3 + 1)] = 0; // filter: none
-    for (let x = 0; x < size; x++) {
-      const d = Math.hypot(x + 0.5 - c, y + 0.5 - c);
-      // Handle: a small cream square to the right of the rim.
-      const handle = x > c + rim * 0.92 && x < c + rim * 1.3 && Math.abs(y - c) < rim * 0.22 && d > rim;
-      const col = d < coffee ? COFFEE : d < rim || handle ? CREAM : BROWN;
-      raw.set(col, y * (size * 3 + 1) + 1 + x * 3);
+const meta = await sharp(SRC).metadata();
+
+// 1) Square the artwork by padding the short side with the margin colour.
+const side = Math.max(meta.width, meta.height);
+const square = await sharp(SRC)
+  .flatten({ background: DARK_BROWN })
+  .extend({
+    top: Math.floor((side - meta.height) / 2),
+    bottom: Math.ceil((side - meta.height) / 2),
+    left: Math.floor((side - meta.width) / 2),
+    right: Math.ceil((side - meta.width) / 2),
+    background: DARK_BROWN,
+  })
+  .png()
+  .toBuffer();
+
+// 2) Find the orange tile's bounding box (pixels clearly brighter than the margin).
+const { data, info } = await sharp(square).raw().toBuffer({ resolveWithObject: true });
+let minX = side, minY = side, maxX = 0, maxY = 0;
+for (let y = 0; y < info.height; y++) {
+  for (let x = 0; x < info.width; x++) {
+    const i = (y * info.width + x) * info.channels;
+    if (data[i] > 120) {
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
     }
   }
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(size, 0);
-  ihdr.writeUInt32BE(size, 4);
-  ihdr[8] = 8; // bit depth
-  ihdr[9] = 2; // colour type: RGB
-  return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-    chunk("IHDR", ihdr),
-    chunk("IDAT", deflateSync(raw)),
-    chunk("IEND", Buffer.alloc(0)),
-  ]);
 }
+const tileSide = Math.max(maxX - minX, maxY - minY) + 1;
+const tile = await sharp(square)
+  .extract({ left: minX, top: minY, width: Math.min(tileSide, side - minX), height: Math.min(tileSide, side - minY) })
+  .png()
+  .toBuffer();
 
-const out = new URL("../public/icons/", import.meta.url);
-mkdirSync(out, { recursive: true });
-writeFileSync(new URL("icon-192.png", out), icon(192, 0.62));
-writeFileSync(new URL("icon-512.png", out), icon(512, 0.62));
-writeFileSync(new URL("icon-maskable-512.png", out), icon(512, 0.5)); // inside the 80% safe zone
-console.log("Wrote placeholder icons to public/icons/");
+const resize = (buf, size) => sharp(buf).resize(size, size, { fit: "cover", kernel: "lanczos3" }).png();
+
+await resize(square, 192).toFile(OUT + "icon-192.png");
+await resize(square, 512).toFile(OUT + "icon-512.png");
+
+// Maskable: shrink the artwork to 86 % and pad with margin colour.
+const inner = Math.round(512 * 0.86);
+const pad = Math.floor((512 - inner) / 2);
+await sharp(await resize(square, inner).toBuffer())
+  .extend({ top: pad, left: pad, bottom: 512 - inner - pad, right: 512 - inner - pad, background: DARK_BROWN })
+  .png()
+  .toFile(OUT + "icon-maskable-512.png");
+
+await resize(tile, 180).flatten({ background: DARK_BROWN }).toFile(OUT + "apple-touch-icon.png");
+await resize(tile, 32).toFile(OUT + "favicon-32.png");
+
+console.log(`Source ${meta.width}x${meta.height}; tile ${tileSide}px at (${minX},${minY}).`);
+if (side < 512) console.warn(`NOTE: source is ${side}px, so the 512px icons are upscaled. Use a >=1024px source for crisp icons.`);
+console.log("Wrote icon set to public/icons/");

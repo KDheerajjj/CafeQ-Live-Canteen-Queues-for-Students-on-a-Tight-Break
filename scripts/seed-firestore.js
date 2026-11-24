@@ -19,7 +19,10 @@ if (!projectId || projectId === "your-project-id") {
   process.exit(1);
 }
 
-const REQUIRED = { name: "string", location_desc: "string", lat: "number", lng: "number", geofence_m: "number", walk_min: "number" };
+const REQUIRED = {
+  name: "string", type: "string", location_desc: "string", lat: "number", lng: "number",
+  geofence_m: "number", walk_min: "number", service_sec_per_person: "number",
+};
 
 const raw = JSON.parse(await readFile(new URL("../seed/cafes.json", import.meta.url), "utf8"));
 

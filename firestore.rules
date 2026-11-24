@@ -18,6 +18,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // queue_count -> colour. Same mapping as levelForCount() in status-engine.js.
+    function levelFor(count) {
+      return count <= 2 ? 'green' : (count <= 6 ? 'yellow' : 'red');
+    }
+
     match /cafes/{cafeId} {
       allow read: if true;
       allow write: if false;
@@ -28,11 +33,20 @@ service cloud.firestore {
       // so the dashboard can read them without signing in.
       allow read: if true;
 
+      // v2: every NEW report carries queue_count, and its colour must be the one
+      // that count maps to, so nobody can post count=1 with level=red.
+      // Thresholds MUST match LEVEL_THRESHOLDS in public/js/config.js
+      // (greenMax 2, yellowMax 6); tests/rules-sync.test.js checks this.
+      // Old colour-only reports already stored stay readable; they just can't
+      // be created any more.
       allow create: if request.auth != null
-        && request.resource.data.keys().hasAll(['cafe_id', 'level', 'uid', 'created_at'])
-        && request.resource.data.keys().hasOnly(['cafe_id', 'level', 'uid', 'created_at', 'acc'])
+        && request.resource.data.keys().hasAll(['cafe_id', 'queue_count', 'level', 'uid', 'created_at'])
+        && request.resource.data.keys().hasOnly(['cafe_id', 'queue_count', 'level', 'uid', 'created_at', 'acc'])
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.level in ['green', 'yellow', 'red']
+        && request.resource.data.queue_count is int
+        && request.resource.data.queue_count >= 0
+        && request.resource.data.queue_count <= 100
+        && request.resource.data.level == levelFor(request.resource.data.queue_count)
         && request.resource.data.cafe_id is string
         && exists(/databases/$(database)/documents/cafes/$(request.resource.data.cafe_id))
         && request.resource.data.created_at == request.time

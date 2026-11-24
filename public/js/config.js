@@ -50,9 +50,34 @@ export const EATING_BUFFER_MIN = 5;
 // A trip is "Go" only if it leaves at least this much slack; otherwise "Risky".
 export const SAFETY_MARGIN_MIN = 3;
 
-// Crowd status -> ESTIMATED wait in minutes.
-// PLACEHOLDER until the Phase-2 ML model exists. These are guesses, not
-// measurements, and the UI always labels them "est.".
+// ---- Queue-length reporting (v2) -------------------------------------------
+// Reporters either tap a bucket or type an exact count. A bucket is stored as
+// its midpoint so every report has one number (queue_count).
+export const QUEUE_BUCKETS = [
+  { id: "0-2", label: "0–2", count: 1 },
+  { id: "3-5", label: "3–5", count: 4 },
+  { id: "6-10", label: "6–10", count: 8 },
+  { id: "10+", label: "10+", count: 12 },
+];
+export const QUEUE_COUNT_MAX = 100; // the input and firestore.rules both cap at 100
+
+// queue_count -> colour. <= greenMax: green; <= yellowMax: yellow; above: red.
+// MUST match the numbers in firestore.rules (a unit test checks this).
+export const LEVEL_THRESHOLDS = { greenMax: 2, yellowMax: 6 };
+
+// Any single count above this is stored but IGNORED when aggregating, so one
+// troll typing 99 can't skew a cafe's median.
+export const OUTLIER_COUNT_CAP = 50;
+
+// Count-based wait:  round(median_count × cafe.service_sec_per_person / 60) + PREP_BUFFER_MIN
+// PREP_BUFFER_MIN = time to hand over / make the order once you reach the counter.
+export const PREP_BUFFER_MIN = 1;
+// Used only if a cafe document has no service_sec_per_person. ASSUMPTION.
+export const DEFAULT_SERVICE_SEC_PER_PERSON = 60;
+
+// Crowd COLOUR -> ESTIMATED wait in minutes. FALLBACK ONLY, for cafes whose
+// recent reports are all colour-only (pre-v2). Count-based estimates replace it
+// as soon as a report with queue_count exists. Guesses, labelled "est." in the UI.
 // TODO(phase-2-ml): replace with a per-cafe, per-time-slot prediction.
 export const STATUS_WAIT_MIN = {
   green: 2,

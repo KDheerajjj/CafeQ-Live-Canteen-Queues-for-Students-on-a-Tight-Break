@@ -11,7 +11,7 @@ import { sortForDashboard } from "./status-engine.js";
 import { resolveWalkMinutes } from "./geo.js";
 import { createLocationTracker, usablePosition } from "./location.js";
 import { WALK_SPEED_M_PER_MIN, WALK_DETOUR_FACTOR, MAX_LOCATION_ACCURACY_M } from "./config.js";
-import { esc, levelLabel, minutesAgo, waitText, showNotice, describeError } from "./ui.js";
+import { esc, levelLabel, minutesAgo, waitText, queueText, showNotice, describeError } from "./ui.js";
 
 registerServiceWorker();
 
@@ -44,10 +44,14 @@ function cardHtml({ cafe, status, walk }) {
       <div class="card-head">
         <span class="dot ${esc(status.status)}" aria-hidden="true"></span>
         <span class="card-name">${esc(cafe.name)}</span>
-        <span class="card-status">${esc(levelLabel(status.status))}</span>
+        <span class="card-status">${
+          status.queueCount != null
+            ? `<span class="queue">${esc(queueText(status.queueCount))}</span>`
+            : esc(levelLabel(status.status))
+        }</span>
       </div>
       <div class="card-meta">
-        <span>${esc(waitText(status.waitMin))}</span>
+        <span title="${status.waitSource === "count" ? "Median queue × this counter's assumed service time" : "Rough estimate from the crowd colour"}">${esc(waitText(status.waitMin))}</span>
         <span>${esc(walkText(walk))}</span>
         ${known ? `<span>updated ${esc(minutesAgo(status.updatedMinAgo))} · ${reports}</span>` : `<span>no report in the last 15 min</span>`}
       </div>

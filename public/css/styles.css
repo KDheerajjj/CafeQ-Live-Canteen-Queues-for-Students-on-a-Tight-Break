@@ -225,3 +225,12 @@ h2 { font-size: 1.05rem; margin: 20px 0 8px; }
 /* ---------- location toggle (dashboard) ---------- */
 .loc-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 12px; }
 .loc-bar .hint { margin: 0; }
+
+/* ---------- report: queue buckets + exact count (v2) ---------- */
+.buckets { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.buckets .level-btn { min-height: 76px; font-size: 1.1rem; padding: 12px 14px; gap: 10px; }
+.buckets .level-btn .emoji { font-size: 1.4rem; }
+.exact { margin-top: 18px; }
+.exact label { display: block; font-weight: 600; margin-bottom: 6px; }
+.exact .btn.exact-send { width: auto; padding: 12px 22px; }
+.queue { font-weight: 700; }

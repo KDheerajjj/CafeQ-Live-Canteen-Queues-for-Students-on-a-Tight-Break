@@ -4,9 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>CafeQ — report crowd</title>
-  <meta name="theme-color" content="#7a3e12">
+  <meta name="theme-color" content="#b96222">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
   <link rel="stylesheet" href="./css/styles.css">
 </head>
 <body>
@@ -35,18 +37,18 @@
     </section>
 
     <section id="s-choose" hidden>
-      <p><strong>How busy is it right now?</strong> One tap.</p>
-      <div class="levels">
-        <button class="level-btn green" data-level="green" type="button">
-          <span class="emoji" aria-hidden="true">🟢</span><span>No wait<small>Walk up and order</small></span>
-        </button>
-        <button class="level-btn yellow" data-level="yellow" type="button">
-          <span class="emoji" aria-hidden="true">🟡</span><span>Short line<small>A few people ahead</small></span>
-        </button>
-        <button class="level-btn red" data-level="red" type="button">
-          <span class="emoji" aria-hidden="true">🔴</span><span>Packed<small>Long queue / crowded</small></span>
-        </button>
-      </div>
+      <p><strong>How many people are in the line right now?</strong> One tap.</p>
+      <!-- Bucket buttons are built from QUEUE_BUCKETS in config.js by report.js. -->
+      <div id="buckets" class="buckets"></div>
+
+      <form id="exact-form" class="exact" novalidate>
+        <label for="exact-count">…or type the exact number</label>
+        <div class="minutes-row">
+          <input id="exact-count" type="number" inputmode="numeric" min="0" max="100" step="1" placeholder="e.g. 4">
+          <button id="exact-send" class="btn exact-send" type="submit" disabled>Send</button>
+        </div>
+        <p id="exact-preview" class="hint" aria-live="polite"></p>
+      </form>
       <p id="distance-note" class="hint"></p>
     </section>
 

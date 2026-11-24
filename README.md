@@ -7,12 +7,13 @@ Engineering** how crowded each campus cafe is right now, so they can choose wher
 short break and still get back to class on time.
 
 The live signal is **crowdsourced**: anyone standing at a cafe scans the QR at the counter and
-taps its crowd level (🟢 No wait / 🟡 Short line / 🔴 Packed). It takes about two seconds and
-needs no login and no app install. **Vendors don't need to do anything.**
+taps how long the line is (0–2 / 3–5 / 6–10 / 10+, or types the exact number). It takes about
+two seconds and needs no login and no app install. **Vendors don't need to do anything.**
 
-> **Status: Phase 1.** Cafe names and counter coordinates are real. Walk times in `seed/cafes.json`, the reference
-> point in `config.js`, and the crowd-level → wait-minutes map are **placeholders**. Replace them
-> with measured values before you present any numbers as real.
+> **Status: Phase 1 + v2 upgrades.** Cafe names and counter coordinates are real. These are still
+> **placeholders or assumptions**: walk times in `seed/cafes.json`, the reference point in
+> `config.js`, and each counter's **serving speed** (`service_sec_per_person`: canteen 60 s,
+> cafes 45 s). Calibrate them before you present any wait time as real.
 
 ---
 
@@ -42,7 +43,7 @@ needs no login and no app install. **Vendors don't need to do anything.**
    2. silent anonymous sign-in                      • cafes
    3. cooldown check (3 min / device)               • reports from the last 15 min
    4. GPS → haversine → within geofence?          status-engine.js (in the browser)
-   5. tap 🟢/🟡/🔴 → append to `reports`            → status, confidence, est. wait
+   5. tap queue size → append to `reports`         → median queue, colour, est. wait
                 │                                  → sorted cards / Go-Risky-Skip
                 └──────────► Firestore ◄───────────┘
 ```
@@ -60,17 +61,18 @@ public/                    static site: deploys unchanged to Firebase Hosting or
   css/styles.css
   js/config.js             public Firebase web config + every tunable constant
   js/firebase-init.js      init app, anonymous auth, service-worker registration
-  js/status-engine.js      PURE: reports → status/confidence; sort; trip verdicts
+  js/status-engine.js      PURE: reports → median queue, colour, confidence, wait; sort; verdicts
   js/geo.js                PURE: haversine distance, geofence, walk estimate
   js/location.js           opt-in "use my location" tracker for personal walk times
   js/data.js               shared realtime Firestore listeners (dashboard + worth-it)
   js/ui.js                 small shared DOM helpers (escaping, labels, notices)
   js/dashboard.js, report.js, worthit.js   page controllers
   manifest.webmanifest, service-worker.js, icons/
-seed/cafes.json            the campus cafes (walk times still placeholders)
+assets/icon-source.png     the CafeQ app-icon artwork (source for every icon size)
+seed/cafes.json            the campus cafes (walk times + serving speeds still assumptions)
 scripts/seed-firestore.js  load cafes.json into Firestore (Admin SDK)
 scripts/make-qr.js         qr/<cafe>.png + printable qr/posters.html
-scripts/make-icons.js      regenerate placeholder PWA icons
+scripts/make-icons.js      build icons/ (192, 512, maskable 512, apple-touch 180, favicon 32)
 tests/                     Node unit tests for the pure modules
 firestore.rules, firestore.indexes.json, firebase.json, vercel.json
 ```
@@ -144,9 +146,15 @@ This writes `qr/cafe-a.png` and the rest, plus `qr/posters.html`. Open the poste
 it, and stick one at each counter.
 
 **Verify on a phone:** open the URL in Android Chrome and confirm the dashboard loads. Use
-⋮ → *Install app*. Scan a QR at the counter, allow location, and tap a level; the dashboard on
-another phone should update within a second or two. Turn on airplane mode and reopen the app:
-the shell should still load.
+⋮ → *Install app* and check the home-screen icon is the CafeQ cup tile. Scan a QR at the counter,
+allow location, and tap a queue size; the dashboard on another phone should show "~N in line"
+within a second or two. Turn on airplane mode and reopen the app: the shell should still load.
+
+**Every deploy that changes the UI or icons: bump the service-worker cache.** Change
+`CACHE_VERSION` in `public/service-worker.js` (e.g. `cafeq-cache-v5` → `v6`), and add any new
+file to its `SHELL` list. On activate, the worker deletes every cache with a different name.
+Without the bump, installed apps keep showing the **old** cached icon and pages. To change the
+icon, replace `assets/icon-source.png` (ideally ≥ 1024 px square), run `npm run icons`, then bump.
 
 ## Data model
 
@@ -156,10 +164,12 @@ the shell should still load.
 |---|---|---|
 | *(doc id)* | string | e.g. `cafe-a`; used in QR links |
 | `name` | string | display name |
+| `type` | `"canteen"` or `"cafe"` | Mingos Canteen is the canteen; the rest are cafes |
 | `location_desc` | string | human description of where it is |
 | `lat`, `lng` | number | counter location |
-| `geofence_m` | number | max distance (m) from which a report is accepted |
+| `geofence_m` | number | max distance (m) from which a report is accepted (40 m) |
 | `walk_min` | number | typical walk (min) from the day-scholar reference point |
+| `service_sec_per_person` | number | seconds the counter takes to serve one person. **ASSUMPTION** (canteen 60, cafes 45), to calibrate |
 | `placeholder` | bool | `true` while data is unmeasured; the UI shows a warning |
 
 **`reports/{auto-id}`**: append-only, one document per tap.
@@ -167,10 +177,13 @@ the shell should still load.
 | field | type | meaning |
 |---|---|---|
 | `cafe_id` | string | must match an existing cafe (enforced by rules) |
-| `level` | `"green"`, `"yellow"` or `"red"` | crowd level (enforced by rules) |
+| `queue_count` | integer 0–100 | people in line: the typed number, or a bucket's midpoint (0–2 → 1, 3–5 → 4, 6–10 → 8, 10+ → 12). **Required on new reports** |
+| `level` | `"green"`, `"yellow"` or `"red"` | **derived** from `queue_count` (≤ 2 green, 3–6 yellow, ≥ 7 red); rules reject a mismatch |
 | `uid` | string | random anonymous-auth id; must equal the writer's uid |
 | `created_at` | timestamp | server time; rules require `== request.time` |
 | `acc` | number (optional) | GPS accuracy in metres, kept for later filtering |
+
+Older colour-only reports (no `queue_count`) are still read and handled. See below.
 
 No location coordinates, names, emails or device details are stored.
 
@@ -178,16 +191,27 @@ No location coordinates, names, emails or device details are stored.
 
 `public/js/status-engine.js` is pure and unit-tested. For each cafe:
 
-1. Keep reports from the last **15 min**, newest first.
-2. **0 reports** gives `unknown` (grey) with no confidence. If the newest report is older than
-   15 min, the window is empty, so the status is forced to `unknown`.
-3. Otherwise, **status = mode** (most common level). A tie goes to the level reported most
-   recently.
-4. **Confidence** is `high` if at least 2 reports in the last **10 min** agree with the mode;
-   otherwise `low`.
-5. "updated N min ago" comes from the newest report.
-6. **Estimated wait** comes from `STATUS_WAIT_MIN` in `config.js`: green = 2, yellow = 6,
-   red = 12 min. This is a **placeholder estimate, not a measurement**, until the ML phase.
+1. Keep reports from the last **15 min**, newest first. **Outlier guard:** a single
+   `queue_count` above **50** (`OUTLIER_COUNT_CAP`) is stored but ignored here.
+2. **0 usable reports** gives `unknown` (grey) with no confidence. If the newest report is
+   older than 15 min, the window is empty, so the status is forced to `unknown`.
+3. **Queue length = MEDIAN `queue_count`** of the window. The median is robust: one person typing
+   99, or one stale guess, can't drag it. The dashboard shows it as **"~N in line"**.
+4. **Colour = thresholds on the median** (`LEVEL_THRESHOLDS` in `config.js`): ≤ 2 green, 3–6
+   yellow, ≥ 7 red. The same numbers are in `firestore.rules`, and a test fails if they drift.
+5. **Estimated wait (count-based):**
+   ```
+   wait = round(median_count × cafe.service_sec_per_person ÷ 60) + PREP_BUFFER_MIN (1)
+   ```
+   For the same queue, a cafe (45 s per person) shows a slightly shorter wait than the canteen
+   (60 s per person). **These serving speeds are starting assumptions, not measurements.**
+   Calibrate each one by timing how long its counter takes to serve, say, 10 people.
+6. **Backward compatibility:** if a cafe's window holds only old colour-only reports, the status
+   is their **mode** (a tie goes to the most recent) and the wait comes from the fallback map
+   `STATUS_WAIT_MIN` (green 2, yellow 6, red 12 min). If both kinds are present, the counts decide.
+7. **Confidence** is `high` if at least 2 reports in the last **10 min** have the same colour as
+   the status (a count report's colour comes from its count); otherwise `low`.
+8. "updated N min ago" comes from the newest report.
 
 Dashboard order: cafes you can use soonest come first, sorted by walk plus estimated wait. Packed
 (red) cafes come next, and unknown cafes go last.
@@ -226,7 +250,9 @@ Skip  : total > available
 ```
 - The best **Go** cafe is shown first. If nothing is Go, the app suggests the lowest-total cafe
   as **grab-and-go only**.
-- Every row shows its maths, for example `3 walk + 6 wait (est.) + 5 eat = 14 min of 15`.
+- `estimated_wait` is the cafe's **count-based** estimate when queue reports exist (see the
+  status engine), otherwise the colour fallback. Every row shows its maths, for example
+  `3 walk + 4 wait (est., ~4 in line) + 5 eat = 12 min of 15`.
 - A cafe with **no recent report is assumed packed** (red wait), and the app says so, so the
   verdict errs toward getting you back on time.
 - The spec's formula counts the walk **once**. Tick *Also count the walk back to class* to count
@@ -238,18 +264,20 @@ Skip  : total > available
 
 Trust comes from **proximity + agreement + freshness**, not identity:
 - **Proximity:** a report is only accepted from within the cafe's geofence (GPS + haversine).
-- **Agreement:** the status is the *mode* of recent reports, and confidence needs at least 2
-  agreeing reports.
+- **Agreement:** the queue length is the *median* of recent reports (one outlier can't move it,
+  and counts above 50 are ignored), and confidence needs at least 2 agreeing reports.
 - **Freshness:** only the last 15 minutes count; anything older becomes `unknown`.
 
 **Enforced server-side by `firestore.rules`:** the writer is signed in and the report carries
-their own uid; the level is valid; the cafe exists; the timestamp is the server's; reports
+their own uid; `queue_count` is a whole number from 0 to 100 and `level` is exactly the colour
+that count maps to (no "1 person, Packed"); the cafe exists; the timestamp is the server's; reports
 can't be edited or deleted; `cafes` can't be written by clients.
 
 **Enforced only client-side in Phase 1:** the **geofence** and the **3-minute cooldown**. Rules
 can't see a phone's GPS, and anonymous accounts are free to create. A determined user who edits
 the JavaScript or calls the Firestore API directly **could bypass both** and post fake reports.
-Mode and confidence limit the damage from a single bad actor, but they don't prevent it.
+The median, the outlier cap and confidence limit the damage from a single bad actor, but they
+don't prevent it.
 
 **Phase-2 hardening** would route reports through a **Cloud Function** that re-checks location,
 rate-limits per uid and IP, and drops outliers. Cloud Functions need the **Blaze (pay-as-you-go)
@@ -272,7 +300,10 @@ Nothing in this repo requires billing. If any future feature does, it goes to "F
 npm test
 ```
 These Node unit tests (built-in `node:test`) cover the haversine distance and geofence, status
-(mode, tie-break, confidence, staleness), dashboard sorting, and the Go/Risky/Skip boundaries.
+(mode, tie-break, confidence, staleness), queue counts (thresholds, bucket midpoints, median,
+outlier cap, per-cafe serving speed, colour-only fallback), personal walk times, dashboard
+sorting, the Go/Risky/Skip boundaries, and a check that `firestore.rules` uses the same
+thresholds as `config.js`.
 
 ## Future work
 

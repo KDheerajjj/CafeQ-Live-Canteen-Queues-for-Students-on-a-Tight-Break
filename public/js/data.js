@@ -26,6 +26,8 @@ export function reportFromDoc(d) {
     id: d.id,
     cafe_id: d.get("cafe_id"),
     level: d.get("level"),
+    queue_count: d.get("queue_count") ?? null, // missing on old colour-only reports
+
     created_at: d.get("created_at", { serverTimestamps: "estimate" }),
   };
 }
@@ -45,7 +47,12 @@ export async function watchLiveStatuses(onUpdate, onError) {
     if (!cafes) return;
     const now = Date.now();
     const byCafe = groupByCafe(reports);
-    const rows = cafes.map((cafe) => ({ cafe, status: computeStatus(byCafe[cafe.id] || [], now) }));
+    // Each cafe's own service rate (an assumption, see seed/cafes.json) turns its
+    // median queue length into a wait estimate.
+    const rows = cafes.map((cafe) => ({
+      cafe,
+      status: computeStatus(byCafe[cafe.id] || [], now, { serviceSecPerPerson: cafe.service_sec_per_person }),
+    }));
     onUpdate({ cafes, rows });
   };
 

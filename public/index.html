@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>CafeQ — live cafe crowds</title>
   <meta name="description" content="Live crowd levels at RVCE campus cafes, reported by students nearby.">
-  <meta name="theme-color" content="#7a3e12">
+  <meta name="theme-color" content="#b96222">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./icons/icon-192.png">
-  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
   <link rel="stylesheet" href="./css/styles.css">
 </head>
 <body>
@@ -41,8 +42,10 @@
     </section>
 
     <p class="fineprint">
-      Crowd levels are tapped in by students standing at each cafe in the last 15 minutes.
-      Wait times are <strong>estimates</strong> from the crowd level, not measurements.
+      Queue lengths are tapped in by students standing at each counter in the last 15 minutes;
+      "~N in line" is the median of those reports.
+      Wait times are <strong>estimates</strong>: queue length × each counter's assumed serving speed
+      (canteen ≈ 60 s per person, cafes ≈ 45 s, still to be calibrated by observation), not measurements.
       CafeQ collects no personal data.
     </p>
   </main>

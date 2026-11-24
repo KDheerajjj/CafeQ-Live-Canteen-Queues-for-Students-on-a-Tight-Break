@@ -1,44 +1,56 @@
 {
-  "_comment": "Names and counter coordinates are real (supplied by the team, Nov 2026). walk_min values and location_desc are still PLACEHOLDERS: time the walk from REFERENCE_POINT in public/js/config.js and replace them, then set \"placeholder\": false. cafe-b and cafe-d share the same coordinates (confirmed: same location). Run `npm run seed` after editing.",
+  "_comment": "Names and counter coordinates are real (supplied by the team, Nov 2026). cafe-b and cafe-d share the same coordinates (confirmed: same location). walk_min and location_desc are still PLACEHOLDERS: time the walk from REFERENCE_POINT in public/js/config.js, then set \"placeholder\": false. service_sec_per_person values are STARTING ASSUMPTIONS (canteen 60 s, cafes 45 s per person), NOT measurements: calibrate by timing how long the counter takes to serve, say, 10 people, and divide. Run `npm run seed` after editing.",
   "cafes": [
     {
       "id": "cafe-a",
       "name": "M M Foods",
+      "type": "cafe",
       "location_desc": "RVCE campus",
       "lat": 12.923484,
       "lng": 77.499839,
       "geofence_m": 40,
       "walk_min": 4,
+      "service_sec_per_person": 45,
+      "_service_note": "ASSUMPTION, not measured: calibrate with real observation",
       "placeholder": true
     },
     {
       "id": "cafe-b",
       "name": "Mingos Canteen",
+      "type": "canteen",
       "location_desc": "RVCE campus",
       "lat": 12.922774,
       "lng": 77.500711,
       "geofence_m": 40,
       "walk_min": 3,
+      "service_sec_per_person": 60,
+      "_service_note": "ASSUMPTION, not measured: calibrate with real observation",
       "placeholder": true
     },
     {
       "id": "cafe-c",
       "name": "Cafe Mingos",
+      "type": "cafe",
       "location_desc": "RVCE campus",
       "lat": 12.923745,
       "lng": 77.500567,
       "geofence_m": 40,
       "walk_min": 7,
+      "service_sec_per_person": 45,
+      "_service_note": "ASSUMPTION, not measured: calibrate with real observation",
       "placeholder": true
     },
     {
       "id": "cafe-d",
       "name": "M M Foods (Library)",
+      "type": "cafe",
       "location_desc": "Near the library",
       "lat": 12.9227738,
       "lng": 77.5007112,
       "geofence_m": 40,
       "walk_min": 3,
+      "service_sec_per_person": 45,
+      "_service_note": "ASSUMPTION, not measured: calibrate with real observation",
       "placeholder": true
     }
   ]
