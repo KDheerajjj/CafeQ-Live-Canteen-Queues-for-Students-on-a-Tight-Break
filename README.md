@@ -119,9 +119,11 @@ You need **Node 22.9 or newer** and a Google account. **Do not enable billing an
 6. **Measure your cafes.** Edit `seed/cafes.json`: stand at each counter and read the GPS lat/lng
    (Google Maps → long-press), time the walk from the reference point, set `geofence_m`,
    and set `"placeholder": false`. Update `REFERENCE_POINT` in `config.js` the same way.
-   *Geofence:* the RVCE cafes use **40 m**. That's small enough that the M M Foods and
-   Cafe Mingos zones (84 m apart) don't overlap. If genuine reports get rejected at a counter
-   (indoor GPS is often off by 20–50 m), raise that one cafe to 50–60 m.
+   *Geofence (report radius):* Mingos Canteen **100 m**; Cafe Mingos, M M Foods and M M Foods
+   (Library) **70 m** each. These are generous, to allow for indoor GPS error (often 20–50 m), so
+   neighbouring zones overlap (the cafes are only 84–123 m apart). A student standing at one
+   counter could report for a nearby one, so the QR at each counter is what decides which cafe
+   gets the report. Change a radius live on `/admin.html` → Cafes.
 7. **Seed the cafes.** `cafes` is read-only to clients, so seeding uses the Admin SDK. Pick one
    of these credential options; **none of them puts a key in the repo**:
    - `gcloud auth application-default login` (no key file), **or**
@@ -222,7 +224,7 @@ out of range, the app uses `DEFAULT_SETTINGS` from `config.js`.
 | `type` | `"canteen"` or `"cafe"` | Mingos Canteen is the canteen; the rest are cafes |
 | `location_desc` | string | human description of where it is |
 | `lat`, `lng` | number | counter location |
-| `geofence_m` | number | max distance (m) from which a report is accepted (40 m) |
+| `geofence_m` | number | max distance (m) from which a report is accepted (canteen 100 m, cafes 70 m) |
 | `walk_min` | number | typical walk (min) from the day-scholar reference point |
 | `service_sec_per_person` | number | seconds the counter takes to serve one person. **ASSUMPTION** (canteen 60, cafes 45), to calibrate |
 | `active` | bool | `false` hides the cafe from students (cafes are never deleted) |
