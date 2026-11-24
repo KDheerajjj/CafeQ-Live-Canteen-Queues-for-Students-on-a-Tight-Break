@@ -119,7 +119,7 @@ You need **Node 22.9 or newer** and a Google account. **Do not enable billing an
 6. **Measure your cafes.** Edit `seed/cafes.json`: stand at each counter and read the GPS lat/lng
    (Google Maps → long-press), time the walk from the reference point, set `geofence_m`,
    and set `"placeholder": false`. Update `REFERENCE_POINT` in `config.js` the same way.
-   *Geofence (report radius):* Mingos Canteen **100 m**; Cafe Mingos, M M Foods and M M Foods
+   *Geofence (report radius):* Mingos Canteen **200 m**; Cafe Mingos, M M Foods and M M Foods
    (Library) **70 m** each. These are generous, to allow for indoor GPS error (often 20–50 m), so
    neighbouring zones overlap (the cafes are only 84–123 m apart). A student standing at one
    counter could report for a nearby one, so the QR at each counter is what decides which cafe
@@ -224,7 +224,7 @@ out of range, the app uses `DEFAULT_SETTINGS` from `config.js`.
 | `type` | `"canteen"` or `"cafe"` | Mingos Canteen is the canteen; the rest are cafes |
 | `location_desc` | string | human description of where it is |
 | `lat`, `lng` | number | counter location |
-| `geofence_m` | number | max distance (m) from which a report is accepted (canteen 100 m, cafes 70 m) |
+| `geofence_m` | number | max distance (m) from which a report is accepted (canteen 200 m, cafes 70 m) |
 | `walk_min` | number | typical walk (min) from the day-scholar reference point |
 | `service_sec_per_person` | number | seconds the counter takes to serve one person. **ASSUMPTION** (canteen 60, cafes 45), to calibrate |
 | `active` | bool | `false` hides the cafe from students (cafes are never deleted) |

@@ -21,7 +21,7 @@
       "location_desc": "RVCE campus",
       "lat": 12.922774,
       "lng": 77.500711,
-      "geofence_m": 100,
+      "geofence_m": 200,
       "walk_min": 3,
       "service_sec_per_person": 60,
       "_service_note": "ASSUMPTION, not measured: calibrate with real observation",
